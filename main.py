@@ -1,6 +1,10 @@
-from LSTM import *
-from GCN import *
+from Predictor import *
 import flags
+
+flags.DEFINE_string('data_dir', 'cascade-datasets/twitter/', None)
+flags.DEFINE_string('graph', 'graph.txt', None)
+flags.DEFINE_string('train', 'train.txt', None)
+flags.DEFINE_string('test', 'test.txt', None)
 
 flags.DEFINE_integer('num_node', 1024, 'Node with index 0 is NULL')
 flags.DEFINE_integer('dim', 64, None)
@@ -19,6 +23,7 @@ flags.DEFINE_string('model', 'GCN', None)
 FLAGS = flags.FLAGS
 
 if __name__ == '__main__':
-	with tf.Session() as sess:
-		model = eval(FLAGS.model)(FLAGS)
-		sess.run(tf.global_variables_initializer())
+	graph = Graph(FLAGS)
+	# with tf.Session() as sess:
+	# 	model = eval(FLAGS.model)(FLAGS)
+	# 	sess.run(tf.global_variables_initializer())

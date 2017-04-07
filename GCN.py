@@ -15,6 +15,7 @@ class GCN(object):
 		'''
 		self.kernel_n_idx = [tf.placeholder(tf.int32, [None, size]) for size in self.params.kernel_sizes]
 		self.candidate_idx = tf.placeholder(tf.int32, [None])
+		# indicate which entry is the ground truth
 		self.next_idx = tf.placeholder(tf.int32, [1])
 
 
