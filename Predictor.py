@@ -20,3 +20,10 @@ class Graph(object):
 		nbs = [self.nbs[n] for n in ns]
 		return set.union(*nbs)
 
+	def subgraph_es(self, ns):
+		ns_set = set(ns)
+		es = []
+		for n in ns:
+			nbs = self.nbs[n] & ns_set
+			es += [(n, nb) for nb in nbs]
+		return es
