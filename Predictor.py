@@ -1,10 +1,16 @@
+import dill
+import os
 from collections import defaultdict
 from GCN import GCN
 
 class Graph(object):
 	def __init__(self, params):
 		self.params = params
-		self.init_nbs()
+		if os.path.exists(self.params.data_dir + 'graph.pkl'):
+			self.nbs = dill.load(open(self.params.data_dir + 'graph.pkl', 'rb'))
+		else:
+			self.init_nbs()
+			dill.dump(self.nbs, open(self.params.data_dir + 'graph.pkl', 'wb'))
 
 	def init_nbs(self):
 		self.nbs = defaultdict(lambda : set())

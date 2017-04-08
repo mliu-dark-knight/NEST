@@ -4,6 +4,9 @@ import flags
 flags.DEFINE_string('data_dir', 'cascade-datasets/twitter/', None)
 flags.DEFINE_string('subgraph', 'subgraph/', None)
 flags.DEFINE_string('graph', 'graph.txt', None)
+flags.DEFINE_string('kernel', 'kernel.json', None)
+flags.DEFINE_string('query', 'query', None)
+flags.DEFINE_string('meta', 'meta/', None)
 flags.DEFINE_string('train', 'train.txt', None)
 flags.DEFINE_string('test', 'test.txt', None)
 
@@ -25,6 +28,6 @@ FLAGS = flags.FLAGS
 
 if __name__ == '__main__':
 	graph = Graph(FLAGS)
-	# with tf.Session() as sess:
-	# 	model = eval(FLAGS.model)(FLAGS)
-	# 	sess.run(tf.global_variables_initializer())
+	with tf.Session() as sess:
+		model = eval(FLAGS.model)(FLAGS)
+		sess.run(tf.global_variables_initializer())
