@@ -21,10 +21,10 @@ class GCN(object):
 
 
 		kernel_embed = [tf.reshape(tf.nn.embedding_lookup(self.embedding, self.kernel[i]), [-1, self.params.kernel_sizes[i] * self.params.dim])
-		                       for i in xrange(self.params.num_kernel)]
+		                       for i in range(self.params.num_kernel)]
 
 		kernel_conv = [fully_connected(kernel_embed[i], self.params.dim, 'Conv' + str(i), activation='relu')
-		                    for i in xrange(self.params.num_kernel)]
+		                    for i in range(self.params.num_kernel)]
 
 		kernel_pool = [tf.reduce_max(conv, axis=0) if self.params.pooling == 'max' else tf.reduce_mean(conv, axis=0)
 		               for conv in kernel_conv]

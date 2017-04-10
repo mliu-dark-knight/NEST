@@ -10,9 +10,9 @@ class Graph(object):
 	def __init__(self, params):
 		self.params = params
 		path = self.params.data_dir + 'graph.pkl'
-		if os.path.exists(path):
+		try:
 			self.nbs = dill.load(open(path, 'rb'))
-		else:
+		except:
 			self.init_nbs()
 			dill.dump(self.nbs, open(path, 'wb'))
 		self.num_node = len(self.nbs)
@@ -20,8 +20,9 @@ class Graph(object):
 	def init_nbs(self):
 		self.nbs = defaultdict(lambda : set())
 		with open(self.params.data_dir + self.params.graph, 'r') as f:
+			next(f)
 			for line in f:
-				[n1, n2] = map(int, line.rstrip().split())
+				[n1, n2] = list(map(int, line.rstrip().split()))
 				self.nbs[n1].add(n2)
 				self.nbs[n2].add(n1)
 
@@ -58,7 +59,7 @@ class SubGraph(object):
 					num = int(line[1])
 					kernel = []
 				else:
-					kernel.append(np.array(map(int, line)))
+					kernel.append(np.array(list(map(int, line))))
 		self.kernels.append(np.array(kernel))
 
 
@@ -74,15 +75,15 @@ class Predictor(object):
 		self.params = params
 		self.graph = Graph(params)
 		train_path = self.params.data_dir + 'train/train.pkl'
-		if os.path.exists(train_path):
+		try:
 			self.train = dill.load(open(train_path, 'rb'))
-		else:
+		except:
 			self.train = self.read_data('train')
 			dill.dump(self.train, open(train_path, 'wb'))
 		test_path = self.params.data_dir + 'test/test.pkl'
-		if os.path.exists(test_path):
+		try:
 			self.test = dill.load(open(test_path, 'rb'))
-		else:
+		except:
 			self.test = self.read_data('test')
 			dill.dump(self.test, open(test_path, 'wb'))
 		self.kernel_sizes = [1] + [len(kernel[0]) for kernel in self.train[0].subgraph.kernels[1:]]
@@ -94,7 +95,7 @@ class Predictor(object):
 		with open(self.params.data_dir + mode + '/' + getattr(self.params, mode), 'r') as f:
 			for line in f:
 				src, rest = line.strip().split(' ', 1)
-				cascade = map(int, [src] + rest.split()[::2])
+				cascade = list(map(int, [src] + rest.split()[::2]))
 				ns, next = cascade[:-1], cascade[-1]
 				subgraph = SubGraph(ns, self.params.data_dir + mode + '/' + self.params.meta + 'g' + str(id))
 				candidate = self.graph.subgraph_nbs(ns) - set(ns)
