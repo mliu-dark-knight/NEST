@@ -1,13 +1,50 @@
 import os
 import json
+import numpy as np
 from subprocess import call
 from main import FLAGS
 from Predictor import Graph
 
+
+class Meta(object):
+	def __init__(self, perms):
+		assert type(perms) == list
+		self.perms = perms
+
+	def match(self, ns):
+		ns = np.array(ns)
+		return [ns[perm] for perm in self.perms]
+
+	@staticmethod
+	def read_meta(file):
+		def read_one(f):
+			try:
+				num_e = int(f.readline().rstrip().split()[-1])
+			except:
+				return None
+			f.readline()
+			line = np.array(map(int, f.readline().rstrip().split()[1:]))
+			line = np.concatenate(np.split(line, len(line) / 2)[::2], axis=0)
+			meta = np.split(line, len(line) / num_e)
+			f.readline()
+			f.readline()
+			f.readline()
+			return meta
+
+		metas = []
+		with open(file, 'r') as f:
+			while True:
+				meta = read_one(f)
+				if meta == None:
+					break
+				metas.append(Meta(meta))
+		return metas
+
+
 class Preprocess(object):
 	def __init__(self, params=FLAGS):
 		self.params = params
-		# self.graph = Graph(params)
+		self.graph = Graph(params)
 		self.train_cas = self.read_cascade(self.params.data_dir + 'train/' + self.params.train)
 		self.test_cas = self.read_cascade(self.params.data_dir + 'test/' + self.params.test)
 
@@ -39,6 +76,7 @@ class Preprocess(object):
 
 	def create_kernel(self):
 		kernels = json.load(open(self.params.data_dir + self.params.kernel))
+		self.num_kernel = len(kernels)
 		with open(self.params.data_dir + self.params.query, 'w') as f:
 			for _, val in sorted(kernels.iteritems()):
 				f.write('t #\n')
@@ -64,7 +102,38 @@ class Preprocess(object):
 				command = 'wine SubMatch/SubMatch.exe mode=2 data=SubMatch/data/%s query=SubMatch/%s maxfreq=100 stats=SubMatch/output/%s' % \
 						  (file, self.params.query, file)
 				call(command, shell=True)
-		call('rm result; rm subgraphs; rm SubMatch/%s' % self.params.query, shell=True)
+				self.rewrite_output('SubMatch/output/%s/' % file, fake_to_real)
+				self.merge(mode, file)
+		call('rm SubMatch/data/g*; rm result; rm SubMatch/%s' % self.params.query, shell=True)
+		self.merge(mode)
+		call('rm subgraphs; rm -rf SubMatch/output/', shell=True)
+
+
+	def merge(self, mode, dir):
+		meta_dir = self.params.data_dir + mode + '/' + self.params.meta
+		if not os.path.exists(meta_dir):
+			os.makedirs(meta_dir)
+		prefix = 'SubMatch/output/'
+		metas = Meta.read_meta('subgraphs')
+			with open(meta_dir + dir, 'w') as fw:
+				for i, file in enumerate(os.listdir(prefix + dir)):
+					fw.write('#\t%d\n' % (i + 1))
+					instances = set()
+					with open('SubMatch/output/' + dir + '/' + file, 'r') as fr:
+						for line in fr:
+							line = line.rstrip()
+							if i >= len(metas):
+								instance = line
+								if instance not in instances:
+									instances.add(instance)
+									fw.write(instance + '\n')
+
+							else:
+								for instance in metas[i].match(line.split()):
+									instance = '\t'.join(instance)
+									if instance not in instances:
+										instances.add(instance)
+										fw.write(instance + '\n')
 
 
 	def rewrite_input(self, file):
@@ -88,6 +157,17 @@ class Preprocess(object):
 			for e in es:
 				f.write('e %d %d 0\n' % (e[0], e[1]))
 		return real_to_fake, fake_to_real, len(es) > 0
+
+	def rewrite_output(self, dir, fake_to_real):
+		for file in os.listdir(dir):
+			ns = []
+			with open(dir + file, 'r') as f:
+				for line in f:
+					ns.append(map(int, line.rstrip().split()))
+			with open(dir + file, 'w') as f:
+				for n in ns:
+					f.write('\t'.join(map(lambda x : str(fake_to_real[x]), n)) + '\n')
+
 
 if __name__ == '__main__':
 	preproc = Preprocess()
