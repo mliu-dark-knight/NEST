@@ -13,10 +13,11 @@ class GCN(object):
 		however, every subgraph can have different number of kernels
 		therefore cannot pad null tensor otherwise would be bad for average pooling
 		'''
-		self.kernel = [tf.placeholder(tf.int32, [None, size]) for size in self.params.kernel_sizes]
+		self.kernel = [tf.placeholder(tf.int32, [None])] +\
+					  [tf.placeholder(tf.int32, [None, size]) for size in self.params.kernel_sizes[1:]]
 		self.candidate = tf.placeholder(tf.int32, [None])
 		# the entry of ground truth, not index
-		self.next = tf.placeholder(tf.int32, [1])
+		self.next = tf.placeholder(tf.int32, shape=())
 
 
 		kernel_embed = [tf.reshape(tf.nn.embedding_lookup(self.embedding, self.kernel[i]), [-1, self.params.kernel_sizes[i] * self.params.dim])
@@ -34,9 +35,9 @@ class GCN(object):
 
 		candidate_embed = tf.nn.embedding_lookup(self.embedding, self.candidate)
 
-		logits = tf.matmul(candidate_embed, tf.transpose(graph_embed))
+		logits = tf.transpose(tf.matmul(candidate_embed, tf.transpose(graph_embed)))
 		self.softmax = tf.nn.softmax(logits)
-		loss = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=tf.expand_dims(self.next, dim=0), logits=tf.expand_dims(logits, dim=0))
+		loss = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=tf.expand_dims(self.next, dim=0), logits=logits)
 
 		self.predict = tf.cast(tf.argmax(logits, 1), 'int32')
 

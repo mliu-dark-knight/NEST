@@ -121,8 +121,8 @@ class Predictor(object):
 			for _ in tqdm(range(self.params.epoch), ncols=100):
 				for data in self.train:
 					sess.run(self.model.gradient_descent, feed_dict=self.feed_dict(data))
-			print('Training accuracy: %f', eval('train', sess))
-			print('Testing accuracy: %f', eval('test', sess))
+			print('Training accuracy: %f', self.eval('train', sess))
+			print('Testing accuracy: %f', self.eval('test', sess))
 
 
 	def eval(self, mode, sess):
