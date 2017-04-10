@@ -15,7 +15,7 @@ class GCN(object):
 		'''
 		self.kernel = [tf.placeholder(tf.int32, [None, size]) for size in self.params.kernel_sizes]
 		self.candidate = tf.placeholder(tf.int32, [None])
-		# indicate which entry is the ground truth
+		# the entry of ground truth, not index
 		self.next = tf.placeholder(tf.int32, [1])
 
 

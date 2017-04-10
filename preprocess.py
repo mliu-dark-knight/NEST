@@ -7,25 +7,21 @@ from Predictor import Graph
 
 
 class Meta(object):
-	def __init__(self, perms):
-		assert type(perms) == list
-		self.perms = perms
+	def __init__(self, perm):
+		self.perm = perm
 
 	def match(self, ns):
 		ns = np.array(ns)
-		return [ns[perm] for perm in self.perms]
+		return ns[self.perm]
 
 	@staticmethod
 	def read_meta(file):
 		def read_one(f):
-			try:
-				num_e = int(f.readline().rstrip().split()[-1])
-			except:
+			if f.readline() == '':
 				return None
 			f.readline()
 			line = np.array(map(int, f.readline().rstrip().split()[1:]))
-			line = np.concatenate(np.split(line, len(line) / 2)[::2], axis=0)
-			meta = np.split(line, len(line) / num_e)
+			meta = np.concatenate(np.split(line, len(line) / 2)[::2], axis=0)
 			f.readline()
 			f.readline()
 			f.readline()
@@ -103,9 +99,8 @@ class Preprocess(object):
 						  (file, self.params.query, file)
 				call(command, shell=True)
 				self.rewrite_output('SubMatch/output/%s/' % file, fake_to_real)
-				self.merge(mode, file)
+			self.merge(mode, file)
 		call('rm SubMatch/data/g*; rm result; rm SubMatch/%s' % self.params.query, shell=True)
-		self.merge(mode)
 		call('rm subgraphs; rm -rf SubMatch/output/', shell=True)
 
 
@@ -113,27 +108,17 @@ class Preprocess(object):
 		meta_dir = self.params.data_dir + mode + '/' + self.params.meta
 		if not os.path.exists(meta_dir):
 			os.makedirs(meta_dir)
-		prefix = 'SubMatch/output/'
 		metas = Meta.read_meta('subgraphs')
-			with open(meta_dir + dir, 'w') as fw:
-				for i, file in enumerate(os.listdir(prefix + dir)):
-					fw.write('#\t%d\n' % (i + 1))
-					instances = set()
-					with open('SubMatch/output/' + dir + '/' + file, 'r') as fr:
-						for line in fr:
-							line = line.rstrip()
-							if i >= len(metas):
-								instance = line
-								if instance not in instances:
-									instances.add(instance)
-									fw.write(instance + '\n')
-
-							else:
-								for instance in metas[i].match(line.split()):
-									instance = '\t'.join(instance)
-									if instance not in instances:
-										instances.add(instance)
-										fw.write(instance + '\n')
+		with open(meta_dir + dir, 'w') as fw:
+			for i in xrange(self.num_kernel):
+				fw.write('#\t%d\n' % (i + 1))
+				file = 'SubMatch/output/' + dir + '/' + str(i + 1)
+				if not os.path.exists(file):
+					continue
+				with open(file, 'r') as fr:
+					for line in fr:
+						line = line.rstrip().split()
+						fw.write('\t'.join(metas[i].match(line)) + '\n')
 
 
 	def rewrite_input(self, file):
@@ -171,8 +156,8 @@ class Preprocess(object):
 
 if __name__ == '__main__':
 	preproc = Preprocess()
-	# preproc.create_subgraph(preproc.train_cas, mode='train')
-	# preproc.create_subgraph(preproc.test_cas, mode='test')
-	# preproc.create_kernel()
+	preproc.create_subgraph(preproc.train_cas, mode='train')
+	preproc.create_subgraph(preproc.test_cas, mode='test')
+	preproc.create_kernel()
 	preproc.match('train')
 	preproc.match('test')
