@@ -38,6 +38,8 @@ class GCN(object):
 		self.softmax = tf.nn.softmax(logits)
 		loss = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=tf.expand_dims(self.next, dim=0), logits=tf.expand_dims(logits, dim=0))
 
+		self.predict = tf.cast(tf.argmax(logits, 1), 'int32')
+
 		global_step = tf.Variable(0, trainable=False)
 		learning_rate = tf.train.inverse_time_decay(self.params.learning_rate, global_step, 1, self.params.decay_rate)
 

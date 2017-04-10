@@ -15,11 +15,11 @@ class Graph(object):
 		else:
 			self.init_nbs()
 			dill.dump(self.nbs, open(path, 'wb'))
+		self.num_node = len(self.nbs)
 
 	def init_nbs(self):
 		self.nbs = defaultdict(lambda : set())
 		with open(self.params.data_dir + self.params.graph, 'r') as f:
-			self.num_node = int(f.readline())
 			for line in f:
 				[n1, n2] = map(int, line.rstrip().split())
 				self.nbs[n1].add(n2)
@@ -46,7 +46,7 @@ class SubGraph(object):
 
 	def init(self, path):
 		self.kernels = []
-		kernel = np.expand_dims(np.array(self.ns), axis=1)
+		kernel = np.array(self.ns)
 		num = 1
 		with open(path, 'r') as f:
 			for line in f:
@@ -59,7 +59,7 @@ class SubGraph(object):
 					kernel = []
 				else:
 					kernel.append(np.array(map(int, line)))
-		self.kernels.append(kernel)
+		self.kernels.append(np.array(kernel))
 
 
 class Data(object):
@@ -67,7 +67,6 @@ class Data(object):
 		self.subgraph = subgraph
 		self.candidate = candidate
 		self.next = next
-		self.kernel_sizes = [len(kernel) for kernel in self.subgraph.kernels]
 
 
 class Predictor(object):
@@ -85,8 +84,8 @@ class Predictor(object):
 			self.test = dill.load(open(test_path, 'rb'))
 		else:
 			self.test = self.read_data('test')
-			dill.dump(self.test, open(test_path), 'wb')
-		self.kernel_sizes = self.train[0].kernel_sizes
+			dill.dump(self.test, open(test_path, 'wb'))
+		self.kernel_sizes = [1] + [len(kernel[0]) for kernel in self.train[0].subgraph.kernels[1:]]
 		self.num_kernel = len(self.kernel_sizes)
 
 	def read_data(self, mode):
@@ -108,10 +107,10 @@ class Predictor(object):
 		subgraph, candidate, next = data.subgraph, data.candidate, data.next
 		feed = {k: kernel for k, kernel in zip(self.model.kernel, subgraph.kernels)}
 		feed[self.model.candidate] = candidate
-		feed[self.model.next] = np.where(candidate == next)
+		feed[self.model.next] = np.where(candidate == next)[0][0]
 		return feed
 
-	def train(self):
+	def fit(self):
 		self.params.num_node = self.graph.num_node
 		self.params.kernel_sizes = self.kernel_sizes
 		self.params.num_kernel = self.num_kernel
@@ -122,7 +121,15 @@ class Predictor(object):
 			for _ in tqdm(range(self.params.epoch), ncols=100):
 				for data in self.train:
 					sess.run(self.model.gradient_descent, feed_dict=self.feed_dict(data))
+			print('Training accuracy: %f', eval('train', sess))
+			print('Testing accuracy: %f', eval('test', sess))
 
 
-	def eval(self, mode):
-		pass
+	def eval(self, mode, sess):
+		correct = 0.0
+		all_data = self.train if mode == 'train' else self.test
+		for data in all_data:
+			predict = sess.run(self.model.predict, feed_dict=self.feed_dict(data))
+			if predict == np.where(data.candidate == data.next)[0][0]:
+				correct += 1.0
+		return correct / len(all_data)

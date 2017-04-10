@@ -10,12 +10,12 @@ flags.DEFINE_string('meta', 'meta/', None)
 flags.DEFINE_string('train', 'train.txt', None)
 flags.DEFINE_string('test', 'test.txt', None)
 
-flags.DEFINE_integer('num_node', None, 'Node with index 0 is NULL')
+flags.DEFINE_integer('num_node', 10, 'Node with index 0 is NULL')
 flags.DEFINE_integer('dim', 200, None)
 flags.DEFINE_integer('max_seq_len', 16, None)
 
-flags.DEFINE_integer('num_kernel', None, None)
-flags.DEFINE_list('kernel_sizes', None, 'list of number of nodes in kernel')
+flags.DEFINE_integer('num_kernel', 1, None)
+flags.DEFINE_list('kernel_sizes', [1], 'list of number of nodes in kernel')
 flags.DEFINE_string('pooling', 'average', 'max pooling or average pooling [max, average]')
 flags.DEFINE_integer('fc_dim', 400, 'dimension for fully connected layers after pooling')
 
@@ -33,4 +33,4 @@ if __name__ == '__main__':
 	# 	sess.run(tf.global_variables_initializer())
 
 	predictor = Predictor(FLAGS)
-	predictor.train()
+	predictor.fit()
