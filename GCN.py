@@ -13,8 +13,7 @@ class GCN(object):
 		however, every subgraph can have different number of kernels
 		therefore cannot pad null tensor otherwise would be bad for average pooling
 		'''
-		self.kernel = [tf.placeholder(tf.int32, [None])] +\
-					  [tf.placeholder(tf.int32, [None, size]) for size in self.params.kernel_sizes[1:]]
+		self.kernel = [tf.placeholder(tf.int32, [None, size]) for size in self.params.kernel_sizes]
 		self.candidate = tf.placeholder(tf.int32, [None])
 		# the entry of ground truth, not index
 		self.next = tf.placeholder(tf.int32, shape=())

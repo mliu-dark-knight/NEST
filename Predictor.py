@@ -47,19 +47,27 @@ class SubGraph(object):
 
 	def init(self, path):
 		self.kernels = []
-		kernel = np.array(self.ns)
+		kernel = np.expand_dims(np.array(self.ns), axis=1)
 		num = 1
 		with open(path, 'r') as f:
 			for line in f:
 				line = line.rstrip().split()
 				if line[0] == '#':
 					if len(kernel) == 0:
-						kernel = np.array([0] * num)
-					self.kernels.append(kernel)
-					num = int(line[1])
+						kernel = np.expand_dims(np.array([0] * num), axis=0)
+					self.kernels.append(np.array(kernel))
+					num = int(line[2])
 					kernel = []
+					kernel_set = set()
 				else:
-					kernel.append(np.array(list(map(int, line))))
+					# python set is ordered
+					unique = list(set(line))
+					str = '\t'.join(unique)
+					if str not in kernel_set:
+						kernel_set.add(str)
+						kernel.append(np.array(list(map(int, unique))))
+		if len(kernel) == 0:
+			kernel = np.expand_dims(np.array([0] * num), axis=0)
 		self.kernels.append(np.array(kernel))
 
 
@@ -86,7 +94,7 @@ class Predictor(object):
 		except:
 			self.test = self.read_data('test')
 			dill.dump(self.test, open(test_path, 'wb'))
-		self.kernel_sizes = [1] + [len(kernel[0]) for kernel in self.train[0].subgraph.kernels[1:]]
+		self.kernel_sizes = [len(kernel[0]) for kernel in self.train[0].subgraph.kernels]
 		self.num_kernel = len(self.kernel_sizes)
 
 	def read_data(self, mode):
@@ -120,7 +128,8 @@ class Predictor(object):
 			self.model = eval(self.params.model)(self.params)
 			sess.run(tf.global_variables_initializer())
 			for _ in tqdm(range(self.params.epoch), ncols=100):
-				for data in self.train:
+				for _ in tqdm(range(len(self.train)), ncols=100):
+					data = self.train[_]
 					sess.run(self.model.gradient_descent, feed_dict=self.feed_dict(data))
 			print('Training accuracy: %f', self.eval('train', sess))
 			print('Testing accuracy: %f', self.eval('test', sess))

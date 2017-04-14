@@ -19,7 +19,7 @@ flags.DEFINE_list('kernel_sizes', [1], 'list of number of nodes in kernel')
 flags.DEFINE_string('pooling', 'average', 'max pooling or average pooling [max, average]')
 flags.DEFINE_integer('fc_dim', 400, 'dimension for fully connected layers after pooling')
 
-flags.DEFINE_integer('epoch', 1, None)
+flags.DEFINE_integer('epoch', 10, None)
 flags.DEFINE_float('learning_rate', 0.01, None)
 flags.DEFINE_float('decay_rate', 0.01, None)
 

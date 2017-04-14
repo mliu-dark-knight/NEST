@@ -19,21 +19,22 @@ class Meta(object):
 		def read_one(f):
 			if f.readline() == '':
 				return None
+
 			f.readline()
 			line = np.array(map(int, f.readline().rstrip().split()[1:]))
-			meta = np.concatenate(np.split(line, len(line) / 2)[::2], axis=0)
+			perm = np.concatenate(np.split(line, len(line) / 2)[::2], axis=0)
 			f.readline()
 			f.readline()
 			f.readline()
-			return meta
+			return perm
 
 		metas = []
 		with open(file, 'r') as f:
 			while True:
-				meta = read_one(f)
-				if meta == None:
+				perm = read_one(f)
+				if perm == None:
 					break
-				metas.append(Meta(meta))
+				metas.append(Meta(perm))
 		return metas
 
 
@@ -73,6 +74,8 @@ class Preprocess(object):
 	def create_kernel(self):
 		kernels = json.load(open(self.params.data_dir + self.params.kernel))
 		self.num_kernel = len(kernels)
+		self.num_ns = [v['v'] for k, v in sorted(kernels.iteritems())]
+		self.num_es = [len(v['e']) for k, v in sorted(kernels.iteritems())]
 		with open(self.params.data_dir + self.params.query, 'w') as f:
 			for _, val in sorted(kernels.iteritems()):
 				f.write('t #\n')
@@ -111,7 +114,7 @@ class Preprocess(object):
 		metas = Meta.read_meta('subgraphs')
 		with open(meta_dir + dir, 'w') as fw:
 			for i in xrange(self.num_kernel):
-				fw.write('#\t%d\n' % (i + 1))
+				fw.write('#\t%d\t%d\t%d\n' % ((i + 1), self.num_ns[i], 2 * self.num_es[i]))
 				file = 'SubMatch/output/' + dir + '/' + str(i + 1)
 				if not os.path.exists(file):
 					continue
