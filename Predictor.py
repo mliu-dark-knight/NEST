@@ -127,19 +127,30 @@ class Predictor(object):
 		with tf.Session() as sess:
 			self.model = eval(self.params.model)(self.params)
 			sess.run(tf.global_variables_initializer())
-			for _ in tqdm(range(self.params.epoch), ncols=100):
-				for _ in tqdm(range(len(self.train)), ncols=100):
-					data = self.train[_]
+			for epoch in tqdm(range(self.params.epoch), ncols=100):
+				for i in tqdm(range(len(self.train)), ncols=100):
+					data = self.train[i]
 					sess.run(self.model.gradient_descent, feed_dict=self.feed_dict(data))
-			print('Training accuracy: %f', self.eval('train', sess))
-			print('Testing accuracy: %f', self.eval('test', sess))
+			_, hit, map = self.eval('train', sess)
+			print('Training Hit: %f', hit)
+			print('Training MAP: %f', map)
+			_, hit, map = self.eval('test', sess)
+			print('Testing Hit: %f', hit)
+			print('Testing MAP: %f', map)
 
 
 	def eval(self, mode, sess):
-		correct = 0.0
+		correct, hit, map = 0.0, 0.0, 0.0
 		all_data = self.train if mode == 'train' else self.test
 		for data in all_data:
-			predict = sess.run(self.model.predict, feed_dict=self.feed_dict(data))
-			if predict == np.where(data.candidate == data.next)[0][0]:
+			feed_dict = self.feed_dict(data)
+			truth = np.where(data.candidate == data.next)[0][0]
+			predict = sess.run(self.model.predict, feed_dict=feed_dict)
+			if predict == truth:
 				correct += 1.0
-		return correct / len(all_data)
+			_, top_k = sess.run(self.model.top_k, feed_dict=feed_dict)
+			top_k = top_k[0]
+			if truth in top_k:
+				hit += 1.0
+				map += 1.0 / (np.where(top_k == truth)[0][0] + 1)
+		return correct / len(all_data), hit / len(all_data), map / len(all_data)
