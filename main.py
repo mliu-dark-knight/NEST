@@ -1,7 +1,7 @@
 from Predictor import *
 import flags
 
-flags.DEFINE_string('data_dir', 'cascade-datasets/twitter/', None)
+flags.DEFINE_string('data_dir', 'cascade-datasets/dblp/', None)
 flags.DEFINE_string('subgraph', 'subgraph/', None)
 flags.DEFINE_string('graph', 'graph.txt', None)
 flags.DEFINE_string('kernel', 'kernel.json', None)
