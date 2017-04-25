@@ -35,7 +35,7 @@ class GCN(object):
 		candidate_embed = tf.nn.embedding_lookup(self.embedding, self.candidate)
 
 		logits = tf.transpose(tf.matmul(candidate_embed, tf.transpose(graph_embed)))
-		self.softmax = tf.nn.softmax(logits)
+		self.softmax = tf.nn.softmax(logits, dim=0)
 		loss = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=tf.expand_dims(self.next, dim=0), logits=logits)
 
 		self.predict = tf.cast(tf.argmax(logits, 1), 'int32')
