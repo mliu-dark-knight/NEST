@@ -42,8 +42,8 @@ class Preprocess(object):
 	def __init__(self, params=FLAGS):
 		self.params = params
 		self.graph = Graph(params)
-		self.train_cas = self.read_cascade(self.params.data_dir + 'train/' + self.params.train)
-		self.test_cas = self.read_cascade(self.params.data_dir + 'test/' + self.params.test)
+		self.train_cas = self.read_cascade(self.params.data_dir + self.params.train)
+		self.test_cas = self.read_cascade(self.params.data_dir + self.params.test)
 
 
 	def read_cascade(self, path):
@@ -88,6 +88,9 @@ class Preprocess(object):
 					f.write('a %d\n' % i)
 
 	def match(self, mode):
+		sbm_data = 'SubMatch/data/'
+		if not os.path.exists(sbm_data):
+			os.makedirs(sbm_data)
 		call('cp %s SubMatch/%s' % (self.params.data_dir + self.params.query, self.params.query), shell=True)
 		call('rm -rf SubMatch/output/', shell=True)
 		dir = self.params.data_dir + mode + '/'
