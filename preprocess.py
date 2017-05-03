@@ -32,7 +32,7 @@ class Meta(object):
 		with open(file, 'r') as f:
 			while True:
 				perm = read_one(f)
-				if perm == None:
+				if perm is None:
 					break
 				metas.append(Meta(perm))
 		return metas
