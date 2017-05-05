@@ -100,7 +100,7 @@ class Predictor(object):
 	def read_data(self, mode):
 		data = []
 		id = 0
-		with open(self.params.data_dir + mode + '/' + getattr(self.params, mode), 'r') as f:
+		with open(self.params.data_dir + getattr(self.params, mode), 'r') as f:
 			for line in f:
 				src, rest = line.strip().split(' ', 1)
 				cascade = list(map(int, [src] + rest.split()[::2]))
