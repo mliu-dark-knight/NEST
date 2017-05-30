@@ -42,18 +42,17 @@ def batch_norm(x, prefix, training):
 
 
 def dropout(x, keep_prob, training):
-	return tf.cond(training, lambda: tf.nn.dropout(x, keep_prob), lambda: x * keep_prob)
+	return tf.cond(training, lambda: tf.nn.dropout(x, keep_prob), lambda: x)
 
 
 
-def conv1d(x, shape, stride, prefix, suffix='', activation='relu', bn=False):
+def conv1d(x, shape, stride, prefix, suffix='', activation='relu', bn=False, training=None):
 	func = {'relu': tf.nn.relu, 'tanh': tf.nn.tanh, 'sigmoid': tf.nn.sigmoid, None: tf.identity}
 	W = weight(prefix + '_W' + str(suffix), shape)
 	if bn:
-		l = batch_norm(tf.nn.conv1d(x, W, stride, padding='SAME'), prefix)
+		l = batch_norm(tf.nn.conv1d(x, W, stride, padding='SAME'), prefix, training)
 	else:
-		b = bias(prefix + '_b' + str(suffix), shape[-1])
-		l = tf.nn.conv1d(x, W, stride, padding='SAME') + b
+		l = tf.nn.conv1d(x, W, stride, padding='SAME') + bias(prefix + '_b' + str(suffix), shape[-1])
 	return func[activation](l)
 
 
