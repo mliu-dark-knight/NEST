@@ -2,7 +2,7 @@ from __future__ import print_function
 import dill
 import os
 import numpy as np
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from tqdm import tqdm
 from GCN import *
 
@@ -58,14 +58,10 @@ class SubGraph(object):
 					self.kernels.append(np.array(kernel))
 					num = int(line[2])
 					kernel = []
-					kernel_set = set()
 				else:
 					# python set is ordered
-					unique = list(set(line))
-					str = '\t'.join(unique)
-					if str not in kernel_set:
-						kernel_set.add(str)
-						kernel.append(np.array(list(map(int, unique))))
+					unique = list(OrderedDict.fromkeys(line))
+					kernel.append(np.array(list(map(int, unique))))
 		if len(kernel) == 0:
 			kernel = np.expand_dims(np.array([0] * num), axis=0)
 		self.kernels.append(np.array(kernel))
