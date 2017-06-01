@@ -41,7 +41,9 @@ class Preprocess(object):
 				f.write('e %d %d 0\n' % (e[0], e[1]))
 
 	def create_kernel(self):
-		kernels = json.load(open(self.params.data_dir + self.params.kernel))
+		kernels = {}
+		for k, v in json.load(open(self.params.data_dir + self.params.kernel)).iteritems():
+			kernels[int(k)] = v
 		self.num_kernel = len(kernels)
 		self.num_ns = [v['v'] for k, v in sorted(kernels.iteritems())]
 		self.num_es = [len(v['e']) for k, v in sorted(kernels.iteritems())]

@@ -6,6 +6,7 @@ from collections import defaultdict, OrderedDict
 from tqdm import tqdm
 from GCN import *
 
+
 class Graph(object):
 	def __init__(self, params):
 		self.params = params
