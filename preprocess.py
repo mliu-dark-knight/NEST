@@ -6,37 +6,6 @@ from main import FLAGS
 from Predictor import Graph
 
 
-class Meta(object):
-	def __init__(self, perm):
-		self.perm = perm
-
-	def match(self, ns):
-		ns = np.array(ns)
-		return ns[self.perm]
-
-	@staticmethod
-	def read_meta(file):
-		def read_one(f):
-			if f.readline() == '':
-				return None
-
-			f.readline()
-			line = np.array(map(int, f.readline().rstrip().split()[1:]))
-			perm = np.concatenate(np.split(line, len(line) / 2)[::2], axis=0)
-			f.readline()
-			f.readline()
-			f.readline()
-			return perm
-
-		metas = []
-		with open(file, 'r') as f:
-			while True:
-				perm = read_one(f)
-				if perm is None:
-					break
-				metas.append(Meta(perm))
-		return metas
-
 
 class Preprocess(object):
 	def __init__(self, params=FLAGS):
@@ -83,7 +52,6 @@ class Preprocess(object):
 					f.write('v %d 0\n' % i)
 				for e in val['e']:
 					f.write('e %d %d 0\n' % (e[0], e[1]))
-					f.write('e %d %d 0\n' % (e[1], e[0]))
 				for i in xrange(val['v']):
 					f.write('a %d\n' % i)
 
@@ -114,7 +82,6 @@ class Preprocess(object):
 		meta_dir = self.params.data_dir + mode + '/' + self.params.meta
 		if not os.path.exists(meta_dir):
 			os.makedirs(meta_dir)
-		metas = Meta.read_meta('subgraphs')
 		with open(meta_dir + dir, 'w') as fw:
 			for i in xrange(self.num_kernel):
 				fw.write('#\t%d\t%d\t%d\n' % ((i + 1), self.num_ns[i], 2 * self.num_es[i]))
@@ -123,8 +90,7 @@ class Preprocess(object):
 					continue
 				with open(file, 'r') as fr:
 					for line in fr:
-						line = line.rstrip().split()
-						fw.write('\t'.join(metas[i].match(line)) + '\n')
+						fw.write(line)
 
 
 	def rewrite_input(self, file):
