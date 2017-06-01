@@ -80,14 +80,44 @@ class Preprocess(object):
 		call('rm subgraphs; rm -rf SubMatch/output/', shell=True)
 
 
+	def read_meta(self, file):
+		def read_one(f):
+			line = f.readline()
+			if line == '':
+				return None
+			line = line.rstrip().split()
+			f.readline()
+			f.readline()
+			f.readline()
+			f.readline()
+			f.readline()
+			return (int(line[-2]), int(line[-1]))
+
+		num_ns, num_es = [], []
+		with open(file, 'r') as f:
+			while True:
+				pair = read_one(f)
+				if pair is None:
+					break
+				num_ns.append(pair[0])
+				num_es.append(pair[1])
+		return num_ns, num_es
+
+
 	def merge(self, mode, dir):
 		meta_dir = self.params.data_dir + mode + '/' + self.params.meta
 		if not os.path.exists(meta_dir):
 			os.makedirs(meta_dir)
 		with open(meta_dir + dir, 'w') as fw:
+			num_ns, num_es = self.read_meta('subgraphs')
+			assert len(num_ns) == len(num_es)
+			miss = 0
 			for i in xrange(self.num_kernel):
 				fw.write('#\t%d\t%d\t%d\n' % ((i + 1), self.num_ns[i], 2 * self.num_es[i]))
-				file = 'SubMatch/output/' + dir + '/' + str(i + 1)
+				if i - miss >= len(num_ns) or num_ns[i - miss] != self.num_ns[i] or num_es[i - miss] != self.num_es[i]:
+					miss += 1
+					continue
+				file = 'SubMatch/output/' + dir + '/' + str(i - miss + 1)
 				if not os.path.exists(file):
 					continue
 				with open(file, 'r') as fr:

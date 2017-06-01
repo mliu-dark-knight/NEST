@@ -127,7 +127,10 @@ class Predictor(object):
 			for epoch in tqdm(range(self.params.epoch), ncols=100):
 				for i in tqdm(range(len(self.train)), ncols=100):
 					data = self.train[i]
-					sess.run(self.model.gradient_descent, feed_dict=self.feed_dict(data))
+					try:
+						sess.run(self.model.gradient_descent, feed_dict=self.feed_dict(data))
+					except:
+						data
 			_, hit, map = self.eval('train', sess)
 			print('Training Hit: %f', hit)
 			print('Training MAP: %f', map)
