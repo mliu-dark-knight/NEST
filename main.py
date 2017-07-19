@@ -20,12 +20,10 @@ flags.DEFINE_list('graph_activation', ['elu'] * 2, 'activation function for each
 flags.DEFINE_integer('num_kernel', 1, None)
 flags.DEFINE_list('kernel_sizes', [1], 'list of number of nodes in kernel, length of list must be equal to num_kernel')
 flags.DEFINE_string('pooling', 'sum', 'max pooling or average pooling [max, average, sum]')
-flags.DEFINE_integer('fc_dim', 200, 'dimension for fully connected layers after pooling')
 
 flags.DEFINE_integer('epoch', 1, None)
 flags.DEFINE_float('learning_rate', 0.01, None)
 flags.DEFINE_float('decay_rate', 0.0, None)
-flags.DEFINE_integer('num_thread', 1, 'Number of thread during training')
 flags.DEFINE_integer('k', 10, 'k in top_k')
 flags.DEFINE_string('model', 'GCN', None)
 
