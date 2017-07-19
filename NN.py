@@ -21,7 +21,6 @@ def embedding(name, shape):
 	return tf.get_variable(name, shape, initializer=tf.random_uniform_initializer(minval=-1.0 / shape[1], maxval=1.0 / shape[1]))
 
 
-
 def batch_norm(x, prefix, training):
 	with tf.variable_scope('BN'):
 		inputs_shape = x.get_shape()
@@ -56,6 +55,7 @@ def conv1d(x, shape, stride, prefix, suffix='', activation='lrelu', bn=True, tra
 		l = tf.nn.conv1d(x, W, stride, padding='SAME') + bias(prefix + '_b' + str(suffix), shape[-1])
 	return func[activation](l)
 
+
 def conv2d(x, shape, stride, prefix, suffix='', activation='lrelu', bn=True, training=None):
 	func = {'lrelu': tflearn.activations.leaky_relu, 'relu': tf.nn.relu, 'tanh': tf.nn.tanh, 'sigmoid': tf.nn.sigmoid, None: tf.identity}
 	W = weight(prefix + '_W' + str(suffix), shape)
@@ -67,7 +67,8 @@ def conv2d(x, shape, stride, prefix, suffix='', activation='lrelu', bn=True, tra
 
 
 def fully_connected(input, num_neurons, prefix, suffix='', activation='lrelu', bn=False, training=None):
-	func = {'lrelu': tflearn.activations.leaky_relu, 'relu': tf.nn.relu, 'tanh': tf.nn.tanh, 'sigmoid': tf.nn.sigmoid, None: tf.identity}
+	func = {'lrelu': tflearn.activations.leaky_relu, 'elu': tf.nn.elu,
+			'relu': tf.nn.relu, 'tanh': tf.nn.tanh, 'sigmoid': tf.nn.sigmoid, None: tf.identity}
 	W = weight(prefix + '_W' + suffix, [input.get_shape().as_list()[1], num_neurons], init='he')
 	if bn:
 		l = batch_norm(tf.matmul(input, W), prefix, training)
