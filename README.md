@@ -8,7 +8,7 @@ pip install dill tqdm tensorflow
 ## Default Run
 - Run the entire pipeline, including instance matching with kernels, training and evaluating 
 ```
-python maim.py
+python main.py
 ```
 - Only match instances with kernels
 ```
