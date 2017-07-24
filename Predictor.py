@@ -74,7 +74,10 @@ class Data(object):
 		self.candidate = candidate
 		self.next = next
 
-
+'''
+train.pkl and test.pkl are pre-serialized training data and test data,
+remember to delete them after running preprocess.py
+'''
 class Predictor(object):
 	def __init__(self, params):
 		self.params = params

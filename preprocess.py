@@ -20,7 +20,10 @@ class Preprocess(object):
 		with open(path, 'r') as f:
 			for line in f:
 				src, rest = line.strip().split(' ', 1)
-				cascade.append([int(src)] + map(int, rest.split()[::2][:-1]))
+				if self.params.task == 'cascade':
+					cascade.append([int(src)] + map(int, rest.split()[::2][:-1]))
+				else:
+					cascade.append([int(src)] + map(int, rest.split()[::2]))
 		return cascade
 
 	def create_subgraph(self, cascade, mode):

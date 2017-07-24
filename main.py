@@ -1,14 +1,15 @@
 from Predictor import *
 import flags
 
-flags.DEFINE_string('data_dir', 'cascade-datasets/dblp/', '[cascade-datasets/dblp, cascade-datasets/twitter]')
+flags.DEFINE_string('task', 'general', '[cascade, general]')
+flags.DEFINE_string('data_dir', 'cascade-datasets/twitter/', '[cascade-datasets/dblp, cascade-datasets/twitter]')
 flags.DEFINE_string('subgraph', 'subgraph/', 'directory of all subgraphs, each file is a subgraph')
 flags.DEFINE_string('graph', 'graph.txt', 'edge list of the complete graph')
 flags.DEFINE_string('kernel', 'kernel.json', 'kernels to be matched')
 flags.DEFINE_string('query', 'query', 'used to create query files used by SubMatch')
 flags.DEFINE_string('meta', 'meta/', 'directory of matched instances of kernels')
-flags.DEFINE_string('train', 'train.txt', 'file name of training data')
-flags.DEFINE_string('test', 'test.txt', 'file name of test data')
+flags.DEFINE_string('train', 'train.txt', 'each data point is a subgraph, if task is cascade, the last node of the subgraph will be treated as label')
+flags.DEFINE_string('test', 'test.txt', None)
 
 flags.DEFINE_integer('num_node', 1, 'dummy parameter for debugging')
 flags.DEFINE_integer('node_dim', 100, 'for information cascade, dimension of node embedding must equal to dimension of subgraph embedding')
