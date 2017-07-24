@@ -1,6 +1,21 @@
-# Carl-Yang
-Change data_dir in flags in main.py to your data directory.  
-Define your kenrnel to be matched in kernel.json in the corresponding data directory.  
-Run preprocess.py to match all instances of kernels defined in kernel.json.  
-Run main.py for training and evaluating.  
-For detailed explanation of hyper-parameters, please refer to the comments in flags in main.py.
+# Nest
+
+## Dependencies
+```
+pip install dill tqdm tensorflow
+```
+
+## Default Run
+- Run the entire pipeline, including instance matching with kernels, training and evaluating 
+```
+python maim.py
+```
+- Only match instances with kernels
+```
+python preprocess.pu
+```
+
+## Parameters
+- To change dataset, modify the data_dir in flags in main.py
+- kernel.json under each dataset directory defines the kernels to be matched, modify it to customize the kernels
+- For hyper-parameters, please refer to the comment in flags in main.py
