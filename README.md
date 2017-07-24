@@ -18,4 +18,4 @@ python preprocess.py
 ## Parameters
 - To change dataset, modify the data_dir parameter in flags in main.py
 - kernel.json under each dataset directory defines the kernels to be matched, modify it to customize the kernels
-- For hyper-parameters, please refer to the comment in flags in main.py
+- For details of hyper-parameters, please refer to the comment in flags in main.py
