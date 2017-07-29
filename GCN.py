@@ -14,9 +14,13 @@ class GCN(object):
 		therefore cannot pad null tensor otherwise would be bad for average pooling
 		'''
 		self.kernel = [tf.placeholder(tf.int32, [None, size]) for size in self.params.kernel_sizes]
-		self.candidate = tf.placeholder(tf.int32, [None])
-		# the entry of ground truth, not index
-		self.next = tf.placeholder(tf.int32, shape=())
+
+		if self.params.task == 'cascade':
+			self.candidate = tf.placeholder(tf.int32, [None])
+			# the entry of ground truth, not index
+			self.next = tf.placeholder(tf.int32, shape={})
+		else:
+			self.label = tf.placeholder(tf.int32, shape=())
 
 		instance_embed = [tf.reshape(tf.nn.embedding_lookup(self.embedding, self.kernel[i]), [-1, self.params.kernel_sizes[i] * self.params.node_dim])
 		                       for i in range(self.params.num_kernel)]
@@ -35,14 +39,21 @@ class GCN(object):
 		for h, dim, activation in zip(range(len(self.params.graph_h_dim)), self.params.graph_h_dim, self.params.graph_activation):
 			graph_embed = fully_connected(graph_embed, dim, 'FC_' + str(h), activation=activation)
 
-		candidate_embed = tf.nn.embedding_lookup(self.embedding, self.candidate)
+		if self.params.task == 'cascade':
+			candidate_embed = tf.nn.embedding_lookup(self.embedding, self.candidate)
+			logits = tf.transpose(tf.matmul(candidate_embed, tf.transpose(graph_embed)))
+		else:
+			logits = fully_connected(graph_embed, self.params.num_label, 'logits', activation=None)
 
-		logits = tf.transpose(tf.matmul(candidate_embed, tf.transpose(graph_embed)))
-		self.softmax = tf.nn.softmax(logits, dim=0)
-		loss = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=tf.expand_dims(self.next, dim=0), logits=logits)
+		if self.params.task == 'cascade':
+			loss = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=tf.expand_dims(self.next, dim=0), logits=logits)
+		else:
+			loss = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=tf.expand_dims(self.label, dim=0), logits=logits)
 
 		self.predict = tf.cast(tf.argmax(logits, 1), 'int32')
-		self.top_k = tf.nn.top_k(logits, k=self.params.k, sorted=True)
+
+		if self.params.task == 'cascade':
+			self.top_k = tf.nn.top_k(logits, k=self.params.k, sorted=True)
 
 		global_step = tf.Variable(0, trainable=False)
 		learning_rate = tf.train.inverse_time_decay(self.params.learning_rate, global_step, 1, self.params.decay_rate)

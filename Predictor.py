@@ -10,7 +10,8 @@ from GCN import *
 class Graph(object):
 	def __init__(self, params):
 		self.params = params
-		path = self.params.data_dir + 'graph.pkl'
+		self.data_dir = self.params.task + '-datasets/' + self.params.dataset + '/'
+		path = self.data_dir + 'graph.pkl'
 		try:
 			self.nbs = dill.load(open(path, 'rb'))
 		except:
@@ -20,7 +21,7 @@ class Graph(object):
 
 	def init_nbs(self):
 		self.nbs = defaultdict(lambda : set())
-		with open(self.params.data_dir + self.params.graph, 'r') as f:
+		with open(self.data_dir + self.params.graph, 'r') as f:
 			next(f)
 			for line in f:
 				[n1, n2] = list(map(int, line.rstrip().split()))
@@ -81,14 +82,15 @@ remember to delete them after running preprocess.py
 class Predictor(object):
 	def __init__(self, params):
 		self.params = params
+		self.data_dir = self.params.task + '-datasets/' + self.params.dataset + '/'
 		self.graph = Graph(params)
-		train_path = self.params.data_dir + 'train/train.pkl'
+		train_path = self.data_dir + 'train/train.pkl'
 		try:
 			self.train = dill.load(open(train_path, 'rb'))
 		except:
 			self.train = self.read_data('train')
 			dill.dump(self.train, open(train_path, 'wb'))
-		test_path = self.params.data_dir + 'test/test.pkl'
+		test_path = self.data_dir + 'test/test.pkl'
 		try:
 			self.test = dill.load(open(test_path, 'rb'))
 		except:
@@ -100,12 +102,12 @@ class Predictor(object):
 	def read_data(self, mode):
 		data = []
 		id = 0
-		with open(self.params.data_dir + getattr(self.params, mode), 'r') as f:
+		with open(self.data_dir + getattr(self.params, mode), 'r') as f:
 			for line in f:
 				src, rest = line.strip().split(' ', 1)
 				cascade = list(map(int, [src] + rest.split()[::2]))
 				ns, next = cascade[:-1], cascade[-1]
-				subgraph = SubGraph(ns, self.params.data_dir + mode + '/' + self.params.meta + 'g' + str(id))
+				subgraph = SubGraph(ns, self.data_dir + mode + '/' + self.params.meta + 'g' + str(id))
 				candidate = self.graph.subgraph_nbs(ns) - set(ns)
 				candidate.add(next)
 				id += 1
@@ -130,10 +132,7 @@ class Predictor(object):
 			for epoch in tqdm(range(self.params.epoch), ncols=100):
 				for i in tqdm(range(len(self.train)), ncols=100):
 					data = self.train[i]
-					try:
-						sess.run(self.model.gradient_descent, feed_dict=self.feed_dict(data))
-					except:
-						data
+					sess.run(self.model.gradient_descent, feed_dict=self.feed_dict(data))
 			_, hit, map = self.eval('train', sess)
 			print('Training Hit: %f', hit)
 			print('Training MAP: %f', map)

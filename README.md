@@ -5,14 +5,18 @@
 pip install dill tqdm tensorflow
 ```
 
-## Default Run
-- Run the entire pipeline, including instance matching with motifs, training and evaluating 
+## Pipeline
+- Match instances with motifs
+```
+# for cascade task
+python preprocess.py
+# for classification task
+python prepare.py
+```
+
+- Training and evaluating 
 ```
 python main.py
-```
-- Only match instances with motifs
-```
-python preprocess.py
 ```
 
 ## Parameters

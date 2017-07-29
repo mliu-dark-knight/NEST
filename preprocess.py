@@ -11,8 +11,9 @@ class Preprocess(object):
 	def __init__(self, params=FLAGS):
 		self.params = params
 		self.graph = Graph(params)
-		self.train_cas = self.read_cascade(self.params.data_dir + self.params.train)
-		self.test_cas = self.read_cascade(self.params.data_dir + self.params.test)
+		self.data_dir = self.params.task + '-datasets/' + self.params.dataset + '/'
+		self.train_cas = self.read_cascade(self.data_dir + self.params.train)
+		self.test_cas = self.read_cascade(self.data_dir + self.params.test)
 
 
 	def read_cascade(self, path):
@@ -20,14 +21,11 @@ class Preprocess(object):
 		with open(path, 'r') as f:
 			for line in f:
 				src, rest = line.strip().split(' ', 1)
-				if self.params.task == 'cascade':
-					cascade.append([int(src)] + map(int, rest.split()[::2][:-1]))
-				else:
-					cascade.append([int(src)] + map(int, rest.split()[::2]))
+				cascade.append([int(src)] + map(int, rest.split()[::2][:-1]))
 		return cascade
 
 	def create_subgraph(self, cascade, mode):
-		path = self.params.data_dir + mode + '/' + self.params.subgraph
+		path = self.data_dir + mode + '/' + self.params.subgraph
 		if not os.path.exists(path):
 			os.makedirs(path)
 		for i, cas in enumerate(cascade):
@@ -45,12 +43,12 @@ class Preprocess(object):
 
 	def create_kernel(self):
 		kernels = {}
-		for k, v in json.load(open(self.params.data_dir + self.params.kernel)).iteritems():
+		for k, v in json.load(open(self.data_dir + self.params.kernel)).iteritems():
 			kernels[int(k)] = v
 		self.num_kernel = len(kernels)
 		self.num_ns = [v['v'] for k, v in sorted(kernels.iteritems())]
 		self.num_es = [len(v['e']) for k, v in sorted(kernels.iteritems())]
-		with open(self.params.data_dir + self.params.query, 'w') as f:
+		with open(self.data_dir + self.params.query, 'w') as f:
 			for _, val in sorted(kernels.iteritems()):
 				f.write('t #\n')
 				for i in xrange(val['v']):
@@ -64,9 +62,9 @@ class Preprocess(object):
 		sbm_data = 'SubMatch/data/'
 		if not os.path.exists(sbm_data):
 			os.makedirs(sbm_data)
-		call('cp %s SubMatch/%s' % (self.params.data_dir + self.params.query, self.params.query), shell=True)
+		call('cp %s SubMatch/%s' % (self.data_dir + self.params.query, self.params.query), shell=True)
 		call('rm -rf SubMatch/output/', shell=True)
-		dir = self.params.data_dir + mode + '/'
+		dir = self.data_dir + mode + '/'
 		for file in os.listdir(dir + self.params.subgraph):
 			if file == '.DS_Store':
 				continue
@@ -108,7 +106,7 @@ class Preprocess(object):
 
 
 	def merge(self, mode, dir):
-		meta_dir = self.params.data_dir + mode + '/' + self.params.meta
+		meta_dir = self.data_dir + mode + '/' + self.params.meta
 		if not os.path.exists(meta_dir):
 			os.makedirs(meta_dir)
 		with open(meta_dir + dir, 'w') as fw:
