@@ -25,7 +25,7 @@ flags.DEFINE_list('kernel_sizes', [1], 'list of number of nodes in kernel, lengt
 flags.DEFINE_string('pooling', 'average', 'max pooling or average pooling [max, average, sum]')
 
 flags.DEFINE_integer('epoch', 1, 'training epoch')
-flags.DEFINE_float('learning_rate', 1e-2, None)
+flags.DEFINE_float('learning_rate', 1e-4, None)
 flags.DEFINE_float('decay_rate', 0.0, None)
 flags.DEFINE_integer('k', 10, 'k in top_k, for inference in information cascade')
 flags.DEFINE_string('model', 'GCN', None)
