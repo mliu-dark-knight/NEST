@@ -1,12 +1,13 @@
 from NN import *
 
 class GCN(object):
-	def __init__(self, params):
+	def __init__(self, params, graph):
 		self.params = params
-		self.build()
+		self.build(graph)
 
-	def build(self):
-		self.embedding = embedding('embedding', [self.params.num_node, self.params.node_dim])
+	def build(self, graph):
+		feature = tf.Variable(graph.feature, trainable=False, dtype=tf.float32)
+		embedding = fully_connected(feature, self.params.node_dim, 'Embedding')
 		'''
 		placeholder can only take one subgraph to avoid multiple None dimensions
 		tensorflow will throw exception when sub-dimensions does not match
@@ -14,9 +15,9 @@ class GCN(object):
 		therefore cannot pad null tensor otherwise would be bad for average pooling
 		'''
 		self.kernel = [tf.placeholder(tf.int32, [None, size]) for size in self.params.kernel_sizes]
-		self.label = tf.placeholder(tf.int32, shape=())
+		self.label = tf.placeholder(tf.int32, shape=[self.params.num_label])
 
-		instance_embed = [tf.reshape(tf.nn.embedding_lookup(self.embedding, self.kernel[i]), [-1, self.params.kernel_sizes[i] * self.params.node_dim])
+		instance_embed = [tf.reshape(tf.nn.embedding_lookup(embedding, self.kernel[i]), [-1, self.params.kernel_sizes[i] * self.params.node_dim])
 		                       for i in range(self.params.num_kernel)]
 		assert len(self.params.instance_h_dim) == len(self.params.instance_activation)
 		for h, dim, activation in zip(range(len(self.params.instance_h_dim)), self.params.instance_h_dim, self.params.instance_activation):
@@ -33,8 +34,8 @@ class GCN(object):
 		for h, dim, activation in zip(range(len(self.params.graph_h_dim)), self.params.graph_h_dim, self.params.graph_activation):
 			graph_embed = fully_connected(graph_embed, dim, 'FC_' + str(h), activation=activation)
 
-		logits = fully_connected(graph_embed, self.params.num_label, 'logits', activation=None)
-		loss = tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=self.label)
+		logits = fully_connected(graph_embed, self.params.num_label, 'logits', activation='linear')
+		loss = tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=tf.expand_dims(self.label, axis=0))
 
 		self.predict = tf.cast(tf.argmax(logits, 1), 'int32')
 
@@ -44,5 +45,5 @@ class GCN(object):
 		optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
 		self.gradient_descent = optimizer.minimize(loss, global_step=global_step)
 
-		for variable in tf.trainable_variables():
-			print(variable.name, variable.get_shape())
+		# for variable in tf.trainable_variables():
+		# 	print(variable.name, variable.get_shape())

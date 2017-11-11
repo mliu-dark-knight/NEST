@@ -1,16 +1,18 @@
 from __future__ import print_function
-import dill
-import os
-import numpy as np
+
 from collections import defaultdict, OrderedDict
+
+import dill
+import numpy as np
 from tqdm import tqdm
+
 from GCN import *
 
 
 class Graph(object):
 	def __init__(self, params):
 		self.params = params
-		self.data_dir = self.params.task + '-datasets/' + self.params.dataset + '/'
+		self.data_dir = 'data/' + self.params.dataset + '/'
 		path = self.data_dir + 'graph.pkl'
 		try:
 			self.nbs = dill.load(open(path, 'rb'))
@@ -18,6 +20,7 @@ class Graph(object):
 			self.init_nbs()
 			dill.dump(self.nbs, open(path, 'wb'))
 		self.num_node = len(self.nbs)
+		self.feature = self.read_feature()
 
 	def init_nbs(self):
 		self.nbs = defaultdict(lambda : set())
@@ -28,11 +31,6 @@ class Graph(object):
 				self.nbs[n1].add(n2)
 				self.nbs[n2].add(n1)
 
-
-	def subgraph_nbs(self, ns):
-		nbs = [self.nbs[n] for n in ns]
-		return set.union(*nbs)
-
 	def subgraph_es(self, ns):
 		ns_set = set(ns)
 		es = []
@@ -41,6 +39,14 @@ class Graph(object):
 			es += [(n, nb) for nb in nbs]
 		return es
 
+	def read_feature(self):
+		feature = []
+		with open(self.data_dir + self.params.feature) as f:
+			for line in f:
+				feature.append(np.array(list(map(int, line.strip().split()))).astype(np.float32))
+		#0 index indicates invalid node
+		feature = [np.zeros(len(feature[0]))] + feature
+		return np.array(feature)
 
 class SubGraph(object):
 	def __init__(self, ns, path):
@@ -70,10 +76,9 @@ class SubGraph(object):
 
 
 class Data(object):
-	def __init__(self, subgraph, candidate, next):
+	def __init__(self, subgraph, label):
 		self.subgraph = subgraph
-		self.candidate = candidate
-		self.next = next
+		self.label = label
 
 '''
 train.pkl and test.pkl are pre-serialized training data and test data,
@@ -82,77 +87,60 @@ remember to delete them after running preprocess.py
 class Predictor(object):
 	def __init__(self, params):
 		self.params = params
-		self.data_dir = self.params.task + '-datasets/' + self.params.dataset + '/'
+		self.data_dir = 'data/' + self.params.dataset + '/'
 		self.graph = Graph(params)
-		train_path = self.data_dir + 'train/train.pkl'
+		data_dump = self.data_dir + 'data.pkl'
 		try:
-			self.train = dill.load(open(train_path, 'rb'))
+			self.data = dill.load(open(data_dump, 'rb'))
 		except:
-			self.train = self.read_data('train')
-			dill.dump(self.train, open(train_path, 'wb'))
-		test_path = self.data_dir + 'test/test.pkl'
-		try:
-			self.test = dill.load(open(test_path, 'rb'))
-		except:
-			self.test = self.read_data('test')
-			dill.dump(self.test, open(test_path, 'wb'))
-		self.kernel_sizes = [len(kernel[0]) for kernel in self.train[0].subgraph.kernels]
+			self.data = self.read_data()
+			dill.dump(self.data, open(data_dump, 'wb'))
+		self.kernel_sizes = [len(kernel[0]) for kernel in self.data[0].subgraph.kernels]
 		self.num_kernel = len(self.kernel_sizes)
+		self.num_label = len(self.data[0].label)
 
-	def read_data(self, mode):
+	def read_data(self):
 		data = []
 		id = 0
-		with open(self.data_dir + getattr(self.params, mode), 'r') as f:
-			for line in f:
-				src, rest = line.strip().split(' ', 1)
-				cascade = list(map(int, [src] + rest.split()[::2]))
-				ns, next = cascade[:-1], cascade[-1]
-				subgraph = SubGraph(ns, self.data_dir + mode + '/' + self.params.meta + 'g' + str(id))
-				candidate = self.graph.subgraph_nbs(ns) - set(ns)
-				candidate.add(next)
-				id += 1
-				data.append(Data(subgraph, np.array(list(candidate)), next))
+		with open(self.data_dir + self.params.data, 'r') as f1:
+			with open(self.data_dir + self.params.label, 'r') as f2:
+				for line1, line2 in zip(f1, f2):
+					cascade = list(map(int, line1.strip().split()))
+					ns = cascade
+					subgraph = SubGraph(ns, self.data_dir + self.params.meta + 'g' + str(id))
+					label = np.array(list(map(int, line2.strip().split())))
+					id += 1
+					data.append(Data(subgraph, label))
 		return data
 
 	def feed_dict(self, data):
-		subgraph, candidate, next = data.subgraph, data.candidate, data.next
+		subgraph, label = data.subgraph, data.label
 		feed = {k: kernel for k, kernel in zip(self.model.kernel, subgraph.kernels)}
-		feed[self.model.candidate] = candidate
-		feed[self.model.next] = np.where(candidate == next)[0][0]
+		feed[self.model.label] = label
 		return feed
 
 	def fit(self):
 		self.params.num_node = self.graph.num_node
 		self.params.kernel_sizes = self.kernel_sizes
 		self.params.num_kernel = self.num_kernel
+		self.params.num_label = self.num_label
 		print('Start training')
 		with tf.Session() as sess:
-			self.model = eval(self.params.model)(self.params)
+			self.model = GCN(self.params, self.graph)
 			sess.run(tf.global_variables_initializer())
-			for epoch in tqdm(range(self.params.epoch), ncols=100):
-				for i in tqdm(range(len(self.train)), ncols=100):
-					data = self.train[i]
+			for _ in tqdm(range(self.params.epoch), ncols=100):
+				for i in tqdm(range(len(self.data)), ncols=100):
+					data = self.data[i]
 					sess.run(self.model.gradient_descent, feed_dict=self.feed_dict(data))
-			_, hit, map = self.eval('train', sess)
-			print('Training Hit: %f', hit)
-			print('Training MAP: %f', map)
-			_, hit, map = self.eval('test', sess)
-			print('Testing Hit: %f', hit)
-			print('Testing MAP: %f', map)
+			correct = self.eval(sess)
+			print('Training Accuracy: %f', correct)
 
-
-	def eval(self, mode, sess):
-		correct, hit, map = 0.0, 0.0, 0.0
-		all_data = self.train if mode == 'train' else self.test
-		for data in all_data:
-			feed_dict = self.feed_dict(data)
-			truth = np.where(data.candidate == data.next)[0][0]
-			predict = sess.run(self.model.predict, feed_dict=feed_dict)
+	def eval(self, sess):
+		correct = 0.0
+		for i in tqdm(range(len(self.data)), ncols=100):
+			data = self.data[i]
+			truth = np.where(data.label == 1)[0][0]
+			predict = sess.run(self.model.predict, feed_dict=self.feed_dict(data))
 			if predict == truth:
-				correct += 1.0
-			_, top_k = sess.run(self.model.top_k, feed_dict=feed_dict)
-			top_k = top_k[0]
-			if truth in top_k:
-				hit += 1.0
-				map += 1.0 / (np.where(top_k == truth)[0][0] + 1)
-		return correct / len(all_data), hit / len(all_data), map / len(all_data)
+				correct += 1
+		return correct / len(self.data)

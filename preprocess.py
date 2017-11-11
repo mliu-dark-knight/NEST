@@ -11,15 +11,14 @@ class Preprocess(object):
 	def __init__(self, params=FLAGS):
 		self.params = params
 		self.graph = Graph(params)
-		self.data_dir = 'dataset/' + self.params.dataset + '/'
-		self.cascade = self.read_cascade(self.data_dir)
+		self.data_dir = 'data/' + self.params.dataset + '/'
+		self.cascade = self.read_cascade(self.data_dir + self.params.data)
 
 	def read_cascade(self, path):
 		cascade = []
 		with open(path, 'r') as f:
 			for line in f:
-				src, rest = line.strip().split(' ', 1)
-				cascade.append([int(src)] + map(int, rest.split()[::2][:-1]))
+				cascade.append(map(int, line.strip().split()))
 		return cascade
 
 	def create_subgraph(self, cascade):
