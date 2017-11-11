@@ -11,10 +11,8 @@ class Preprocess(object):
 	def __init__(self, params=FLAGS):
 		self.params = params
 		self.graph = Graph(params)
-		self.data_dir = self.params.task + '-datasets/' + self.params.dataset + '/'
-		self.train_cas = self.read_cascade(self.data_dir + self.params.train)
-		self.test_cas = self.read_cascade(self.data_dir + self.params.test)
-
+		self.data_dir = 'dataset/' + self.params.dataset + '/'
+		self.cascade = self.read_cascade(self.data_dir)
 
 	def read_cascade(self, path):
 		cascade = []
@@ -24,8 +22,8 @@ class Preprocess(object):
 				cascade.append([int(src)] + map(int, rest.split()[::2][:-1]))
 		return cascade
 
-	def create_subgraph(self, cascade, mode):
-		path = self.data_dir + mode + '/' + self.params.subgraph
+	def create_subgraph(self, cascade):
+		path = self.data_dir + self.params.subgraph
 		if not os.path.exists(path):
 			os.makedirs(path)
 		for i, cas in enumerate(cascade):
@@ -58,13 +56,13 @@ class Preprocess(object):
 				for i in xrange(val['v']):
 					f.write('a %d\n' % i)
 
-	def match(self, mode):
+	def match(self):
 		sbm_data = 'SubMatch/data/'
 		if not os.path.exists(sbm_data):
 			os.makedirs(sbm_data)
 		call('cp %s SubMatch/%s' % (self.data_dir + self.params.query, self.params.query), shell=True)
 		call('rm -rf SubMatch/output/', shell=True)
-		dir = self.data_dir + mode + '/'
+		dir = self.data_dir
 		for file in os.listdir(dir + self.params.subgraph):
 			if file == '.DS_Store':
 				continue
@@ -76,7 +74,7 @@ class Preprocess(object):
 						  (file, self.params.query, file)
 				call(command, shell=True)
 				self.rewrite_output('SubMatch/output/%s/' % file, fake_to_real)
-			self.merge(mode, file)
+			self.merge(file)
 		call('rm SubMatch/data/g*; rm result; rm SubMatch/%s' % self.params.query, shell=True)
 		call('rm subgraphs; rm -rf SubMatch/output/', shell=True)
 
@@ -105,8 +103,8 @@ class Preprocess(object):
 		return num_ns, num_es
 
 
-	def merge(self, mode, dir):
-		meta_dir = self.data_dir + mode + '/' + self.params.meta
+	def merge(self, dir):
+		meta_dir = self.data_dir + self.params.meta
 		if not os.path.exists(meta_dir):
 			os.makedirs(meta_dir)
 		with open(meta_dir + dir, 'w') as fw:
@@ -161,8 +159,6 @@ class Preprocess(object):
 
 if __name__ == '__main__':
 	preproc = Preprocess()
-	preproc.create_subgraph(preproc.train_cas, mode='train')
-	preproc.create_subgraph(preproc.test_cas, mode='test')
+	preproc.create_subgraph(preproc.cascade)
 	preproc.create_kernel()
-	preproc.match('train')
-	preproc.match('test')
+	preproc.match()

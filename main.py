@@ -1,8 +1,6 @@
 from Predictor import *
-from Classifier import *
 import flags
 
-flags.DEFINE_string('task', 'classification', '[cascade, classification]')
 flags.DEFINE_string('dataset', 'enzymes', '[dblp, twitter, mutag, proteins, enzymes, ptc]')
 flags.DEFINE_string('subgraph', 'subgraph/', 'directory of all subgraphs, each file is a subgraph')
 flags.DEFINE_string('graph', 'graph.txt', 'edge list of the complete graph')
@@ -37,9 +35,5 @@ if __name__ == '__main__':
 	# 	model = eval(FLAGS.model)(FLAGS)
 	# 	sess.run(tf.global_variables_initializer())
 
-	if FLAGS.task == 'cascade':
-		predictor = Predictor(FLAGS)
-		predictor.fit()
-	else:
-		classifier = Classifier(FLAGS)
-		classifier.fit()
+	predictor = Predictor(FLAGS)
+	predictor.fit()
