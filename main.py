@@ -15,7 +15,7 @@ flags.DEFINE_integer('feat_dim', -1, None)
 flags.DEFINE_integer('node_dim', 256, None)
 flags.DEFINE_list('instance_h_dim', [64], 'Dimension of hidden layers between node embedding and instance embedding, last element is the dimension of instance embedding')
 flags.DEFINE_list('instance_activation', ['elu'] * 1, 'Activation function for each hidden layer [sigmoid, tanh, relu, lrelu, elu]')
-flags.DEFINE_list('graph_h_dim', [64], 'Dimension of hidden layers between instance embedding and subgraph embedding, last element is the dimension of subgraph embedding')
+flags.DEFINE_list('graph_h_dim', [16], 'Dimension of hidden layers between instance embedding and subgraph embedding, last element is the dimension of subgraph embedding')
 flags.DEFINE_list('graph_activation', ['elu'] * 1, 'Activation function for each hidden layer [sigmoid, tanh, relu, lrelu, elu]')
 
 flags.DEFINE_list('kernel_sizes', [1], 'List of number of nodes in kernel')

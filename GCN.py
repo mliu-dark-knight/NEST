@@ -1,3 +1,4 @@
+import numpy as np
 from NN import *
 
 class GCN(object):
@@ -6,6 +7,8 @@ class GCN(object):
 		self.build(graph)
 
 	def build(self, graph):
+		K = tf.get_variable('global_K', [self.params.instance_h_dim[-1], 1],
+							initializer=tf.random_normal_initializer(stddev=math.sqrt(2.0 / self.params.instance_h_dim[-1])))
 		feature = tf.Variable(graph.feature, trainable=False, dtype=tf.float32)
 		embedding = fully_connected(feature, self.params.node_dim, 'Embedding')
 		'''
@@ -27,8 +30,11 @@ class GCN(object):
 		pooling = {'max': (lambda embed: tf.reduce_max(embed, axis=0)),
 				   'average': (lambda embed: tf.reduce_mean(embed, axis=0)),
 				   'sum': (lambda embed: tf.reduce_sum(embed, axis=0))}
-		kernel_embed = [pooling[self.params.pooling](embed) for embed in instance_embed]
-		graph_embed = tf.expand_dims(tf.concat(kernel_embed, axis=0), dim=0)
+		kernel_embed = tf.stack([pooling[self.params.pooling](embed) for embed in instance_embed])
+		Q = fully_connected(kernel_embed, self.params.instance_h_dim[-1], 'Q', activation='linear')
+		V = fully_connected(kernel_embed, self.params.instance_h_dim[-1], 'V', activation='linear')
+		Q = tf.nn.softmax(Q / tf.sqrt(np.float32(self.params.instance_h_dim[-1])), dim=0)
+		graph_embed = tf.matmul(tf.nn.softmax(tf.matmul(Q, K)), V, transpose_a=True)
 
 		assert len(self.params.graph_h_dim) == len(self.params.graph_activation)
 		for h, dim, activation in zip(range(len(self.params.graph_h_dim)), self.params.graph_h_dim, self.params.graph_activation):
