@@ -2,15 +2,18 @@ import numpy as np
 from NN import *
 
 class GCN(object):
-	def __init__(self, params, graph):
+	def __init__(self, params, graph=None):
 		self.params = params
 		self.build(graph)
 
 	def build(self, graph):
 		K = tf.get_variable('global_K', [self.params.instance_h_dim[-1], 1],
-							initializer=tf.random_normal_initializer(stddev=math.sqrt(2.0 / self.params.instance_h_dim[-1])))
-		feature = tf.Variable(graph.feature, trainable=False, dtype=tf.float32)
-		embedding = fully_connected(feature, self.params.node_dim, 'Embedding')
+		                    initializer=tf.random_normal_initializer(stddev=math.sqrt(2.0 / self.params.instance_h_dim[-1])))
+		if self.params.ego:
+			feature = tf.Variable(graph.feature, trainable=False, dtype=tf.float32)
+			self.embedding = fully_connected(feature, self.params.node_dim, 'Embedding')
+		else:
+			self.embedding = embedding('embedding', [self.params.num_node, self.params.node_dim])
 		'''
 		placeholder can only take one subgraph to avoid multiple None dimensions
 		tensorflow will throw exception when sub-dimensions does not match
@@ -18,9 +21,12 @@ class GCN(object):
 		therefore cannot pad null tensor otherwise would be bad for average pooling
 		'''
 		self.kernel = [tf.placeholder(tf.int32, [None, size]) for size in self.params.kernel_sizes]
-		self.label = tf.placeholder(tf.int32, shape=[self.params.num_label])
+		if self.params.ego:
+			self.label = tf.placeholder(tf.int32, shape=[self.params.num_label])
+		else:
+			self.label = tf.placeholder(tf.int32, shape=())
 
-		instance_embed = [tf.reshape(tf.nn.embedding_lookup(embedding, self.kernel[i]), [-1, self.params.kernel_sizes[i] * self.params.node_dim])
+		instance_embed = [tf.reshape(tf.nn.embedding_lookup(self.embedding, self.kernel[i]), [-1, self.params.kernel_sizes[i] * self.params.node_dim])
 		                       for i in range(self.params.num_kernel)]
 		assert len(self.params.instance_h_dim) == len(self.params.instance_activation)
 		for h, dim, activation in zip(range(len(self.params.instance_h_dim)), self.params.instance_h_dim, self.params.instance_activation):
@@ -41,7 +47,11 @@ class GCN(object):
 			graph_embed = fully_connected(graph_embed, dim, 'FC_' + str(h), activation=activation)
 
 		logits = fully_connected(graph_embed, self.params.num_label, 'logits', activation='linear')
-		loss = tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=tf.expand_dims(self.label, axis=0))
+
+		if self.params.ego:
+			loss = tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=tf.expand_dims(self.label, axis=0))
+		else:
+			loss = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=tf.expand_dims(self.label, dim=0), logits=logits)
 
 		self.predict = tf.cast(tf.argmax(logits, 1), 'int32')
 

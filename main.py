@@ -1,7 +1,9 @@
-from Predictor import *
+from Predictor import Predictor
+from Classifier import Classifier
 import flags
 
-flags.DEFINE_string('dataset', 'citeseer', '[cora, citeseer]')
+flags.DEFINE_boolean('ego', True, 'Set to True if use cora or citeseer, otherwise False')
+flags.DEFINE_string('dataset', 'cora', '[cora, citeseer, enzymes, mutag, proteins, ptc]')
 flags.DEFINE_string('subgraph', 'subgraph/', 'Directory of all subgraphs, each file is a subgraph')
 flags.DEFINE_string('graph', 'graph.txt', 'Edge list of the complete graph')
 flags.DEFINE_string('kernel', 'kernel.json', 'Kernels to be matched')
@@ -28,5 +30,9 @@ flags.DEFINE_float('decay_rate', 0.0, None)
 FLAGS = flags.FLAGS
 
 if __name__ == '__main__':
-	predictor = Predictor(FLAGS)
-	predictor.fit()
+	if FLAGS.dataset in ['cora', 'citeseer']:
+		predictor = Predictor(FLAGS)
+		predictor.fit()
+	else:
+		classifier = Classifier(FLAGS)
+		classifier.fit()

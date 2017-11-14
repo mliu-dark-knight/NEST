@@ -1,10 +1,9 @@
-import os
 import json
-import numpy as np
+import os
 from subprocess import call
-from main import FLAGS
-from Predictor import Graph
 
+from Predictor import Graph
+from main import FLAGS
 
 
 class Preprocess(object):
