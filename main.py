@@ -2,8 +2,8 @@ from Predictor import Predictor
 from Classifier import Classifier
 import flags
 
-flags.DEFINE_boolean('ego', True, 'Set to True if use cora or citeseer, otherwise False')
-flags.DEFINE_string('dataset', 'cora', '[cora, citeseer, enzymes, mutag, proteins, ptc]')
+flags.DEFINE_boolean('ego', False, 'Set to True if use cora or citeseer, otherwise False')
+flags.DEFINE_string('dataset', 'mutag', '[cora, citeseer, enzymes, mutag, proteins, ptc]')
 flags.DEFINE_string('subgraph', 'subgraph/', 'Directory of all subgraphs, each file is a subgraph')
 flags.DEFINE_string('graph', 'graph.txt', 'Edge list of the complete graph')
 flags.DEFINE_string('kernel', 'kernel.json', 'Kernels to be matched')

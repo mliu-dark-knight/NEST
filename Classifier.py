@@ -111,7 +111,7 @@ class Classifier(object):
 		with tf.Session() as sess:
 			self.model = GCN(self.params)
 			sess.run(tf.global_variables_initializer())
-			for epoch in tqdm(range(self.params.epoch), ncols=100):
+			for _ in tqdm(range(self.params.epoch), ncols=100):
 				for i in tqdm(range(len(self.data)), ncols=100):
 					data = self.data[i]
 					sess.run(self.model.gradient_descent, feed_dict=self.feed_dict(data))
