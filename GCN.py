@@ -14,6 +14,8 @@ class GCN(object):
 			self.embedding = fully_connected(feature, self.params.node_dim, 'Embedding')
 		else:
 			self.embedding = embedding('embedding', [self.params.num_node, self.params.node_dim])
+		self.training = tf.placeholder(tf.bool)
+		self.embedding = dropout(self.embedding, self.params.keep_prob, self.training)
 		'''
 		placeholder can only take one subgraph to avoid multiple None dimensions
 		tensorflow will throw exception when sub-dimensions does not match
@@ -32,6 +34,7 @@ class GCN(object):
 		for h, dim, activation in zip(range(len(self.params.instance_h_dim)), self.params.instance_h_dim, self.params.instance_activation):
 			instance_embed = [fully_connected(instance_embed[i], dim, 'Conv_' + str(i) + str(h), activation=activation)
 							  for i in range(self.params.num_kernel)]
+			instance_embed = [dropout(embed, self.params.keep_prob, self.training) for embed in instance_embed]
 
 		pooling = {'max': (lambda embed: tf.reduce_max(embed, axis=0)),
 				   'average': (lambda embed: tf.reduce_mean(embed, axis=0)),
@@ -45,6 +48,7 @@ class GCN(object):
 		assert len(self.params.graph_h_dim) == len(self.params.graph_activation)
 		for h, dim, activation in zip(range(len(self.params.graph_h_dim)), self.params.graph_h_dim, self.params.graph_activation):
 			graph_embed = fully_connected(graph_embed, dim, 'FC_' + str(h), activation=activation)
+			graph_embed = dropout(graph_embed, self.params.keep_prob, self.training)
 
 		logits = fully_connected(graph_embed, self.params.num_label, 'logits', activation='linear')
 

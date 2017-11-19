@@ -21,7 +21,7 @@ def fully_connected(input, num_neurons, name, activation='elu'):
 	return func[activation](l)
 
 def dropout(x, keep_prob, training):
-	return tf.cond(training, lambda: tf.nn.dropout(x, keep_prob), lambda: x)
+	return tf.cond(training, lambda: tf.nn.dropout(x, keep_prob), lambda: tf.identity(x))
 
 # assumes 2d input, first dimension if batch size
 def batch_normalization(x, name):

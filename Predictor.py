@@ -1,9 +1,9 @@
 from __future__ import print_function
 
+import random
 from collections import defaultdict, OrderedDict
 
 import dill
-import numpy as np
 from tqdm import tqdm
 
 from GCN import *
@@ -113,10 +113,11 @@ class Predictor(object):
 					data.append(Data(subgraph, label))
 		return data
 
-	def feed_dict(self, data):
+	def feed_dict(self, data, training):
 		subgraph, label = data.subgraph, data.label
 		feed = {k: kernel for k, kernel in zip(self.model.kernel, subgraph.kernels)}
 		feed[self.model.label] = label
+		feed[self.model.training] = training
 		return feed
 
 	def fit(self):
@@ -124,23 +125,28 @@ class Predictor(object):
 		self.params.kernel_sizes = self.kernel_sizes
 		self.params.num_kernel = self.num_kernel
 		self.params.num_label = self.num_label
+		random.shuffle(self.data)
+		split_idx = int(len(self.data) / 10)
+		train, test = self.data[:-split_idx], self.data[-split_idx:]
 		print('Start training')
 		with tf.Session() as sess:
 			self.model = GCN(self.params, self.graph)
 			sess.run(tf.global_variables_initializer())
 			for _ in tqdm(range(self.params.epoch), ncols=100):
-				for i in tqdm(range(len(self.data)), ncols=100):
-					data = self.data[i]
-					sess.run(self.model.gradient_descent, feed_dict=self.feed_dict(data))
-			correct = self.eval(sess)
-			print('Training Accuracy: %f', correct)
+				for i in tqdm(range(len(train)), ncols=100):
+					data = train[i]
+					sess.run(self.model.gradient_descent, feed_dict=self.feed_dict(data, True))
+			train_accuracy = self.eval(sess, train)
+			test_accuracy = self.eval(sess, test)
+			print('Training Accuracy: %f', train_accuracy)
+			print('Testing Accuracy: %f', test_accuracy)
 
-	def eval(self, sess):
+	def eval(self, sess, test):
 		correct = 0.0
-		for i in tqdm(range(len(self.data)), ncols=100):
-			data = self.data[i]
+		for i in tqdm(range(len(test)), ncols=100):
+			data = test[i]
 			truth = np.where(data.label == 1)[0][0]
-			predict = sess.run(self.model.predict, feed_dict=self.feed_dict(data))
+			predict = sess.run(self.model.predict, feed_dict=self.feed_dict(data, False))
 			if predict == truth:
 				correct += 1
-		return correct / len(self.data)
+		return correct / len(test)
