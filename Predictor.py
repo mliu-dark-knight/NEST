@@ -21,6 +21,7 @@ class Graph(object):
 			dill.dump(self.nbs, open(path, 'wb'))
 		self.num_node = len(self.nbs)
 		self.feature = self.read_feature()
+		self.feat_dim = len(self.feature[0])
 
 	def init_nbs(self):
 		self.nbs = defaultdict(lambda : set())
@@ -121,6 +122,7 @@ class Predictor(object):
 		return feed
 
 	def fit(self):
+		self.params.feat_dim = self.graph.feat_dim
 		self.params.num_node = self.graph.num_node
 		self.params.kernel_sizes = self.kernel_sizes
 		self.params.num_kernel = self.num_kernel
@@ -128,18 +130,21 @@ class Predictor(object):
 		random.shuffle(self.data)
 		split_idx = int(len(self.data) / 10)
 		train, test = self.data[:-split_idx], self.data[-split_idx:]
-		print('Start training')
-		with tf.Session() as sess:
+
+		with tf.Session(config=tf.ConfigProto(
+				allow_soft_placement=True,
+				gpu_options=tf.GPUOptions(per_process_gpu_memory_fraction=0.5, allow_growth=True))) as sess:
 			self.model = GCN(self.params, self.graph)
 			sess.run(tf.global_variables_initializer())
 			for _ in tqdm(range(self.params.epoch), ncols=100):
 				for i in tqdm(range(len(train)), ncols=100):
 					data = train[i]
 					sess.run(self.model.gradient_descent, feed_dict=self.feed_dict(data, True))
+			# loss_r = sess.run(self.model.loss_r, feed_dict={self.model.training: False})
+			# print('Reconstruction loss: %f', loss_r)
 			train_accuracy = self.eval(sess, train)
 			test_accuracy = self.eval(sess, test)
-			print('Training Accuracy: %f', train_accuracy)
-			print('Testing Accuracy: %f', test_accuracy)
+			return train_accuracy, test_accuracy
 
 	def eval(self, sess, test):
 		correct = 0.0
