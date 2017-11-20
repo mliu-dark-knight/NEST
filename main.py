@@ -1,7 +1,7 @@
 from Predictor import Predictor
 import flags
 
-flags.DEFINE_string('dataset', 'citeseer', '[cora, citeseer]')
+flags.DEFINE_string('dataset', 'cora', '[cora, citeseer]')
 flags.DEFINE_string('subgraph', 'subgraph/', 'Directory of all subgraphs, each file is a subgraph')
 flags.DEFINE_string('graph', 'graph.txt', 'Edge list of the complete graph')
 flags.DEFINE_string('kernel', 'kernel.json', 'Kernels to be matched')
@@ -22,8 +22,8 @@ flags.DEFINE_string('pooling', 'max', '[max, average, sum]')
 
 flags.DEFINE_integer('epoch', 2, None)
 flags.DEFINE_float('learning_rate', 1e-4, None)
-flags.DEFINE_float('decay_rate', 0.0, None)
 flags.DEFINE_float('lambda_r', 0.1, 'Coefficient of reconstruction loss')
+flags.DEFINE_float('memory_fraction', 1.0, None)
 
 FLAGS = flags.FLAGS
 

@@ -62,9 +62,8 @@ class GCN(object):
 		self.predict = tf.cast(tf.argmax(logits, 1), 'int32')
 
 		global_step = tf.Variable(0, trainable=False)
-		learning_rate = tf.train.inverse_time_decay(self.params.learning_rate, global_step, 1, self.params.decay_rate)
 
-		optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
+		optimizer = tf.train.AdamOptimizer(learning_rate=self.params.learning_rate)
 		self.gradient_descent = optimizer.minimize(loss, global_step=global_step)
 
 		# for variable in tf.trainable_variables():
