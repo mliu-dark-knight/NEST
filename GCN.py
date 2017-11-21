@@ -23,16 +23,19 @@ class GCN(object):
 		K = tf.get_variable('global_K', [self.params.instance_h_dim[-1], 1],
 		                    initializer=tf.random_normal_initializer(stddev=math.sqrt(2.0 / self.params.instance_h_dim[-1])))
 
-		feature = tf.Variable(graph.feature, trainable=False, dtype=tf.float32)
-		hidden = feature
-		for h, dim in enumerate(self.params.node_dim):
-			hidden = dropout(fully_connected(hidden, dim, 'Encode_' + str(h)), self.params.keep_prob, self.training)
-		self.embedding = hidden
+		if self.params.use_feature:
+			feature = tf.Variable(graph.feature, trainable=False, dtype=tf.float32)
+			hidden = feature
+			for h, dim in enumerate(self.params.node_dim):
+				hidden = dropout(fully_connected(hidden, dim, 'Encode_' + str(h)), self.params.keep_prob, self.training)
+			self.embedding = hidden
 
-		# for h, dim in enumerate(reversed(self.params.node_dim[1:])):
-		# 	hidden = dropout(fully_connected(hidden, dim, 'Decode_' + str(h)), self.params.keep_prob, self.training)
-		# reconstruct = fully_connected(hidden, self.params.feat_dim, 'Decode_' + str(len(self.params.node_dim)))
-		# self.loss_r = tf.reduce_mean(tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(labels=feature, logits=reconstruct), axis=1))
+			for h, dim in enumerate(reversed(self.params.node_dim[1:])):
+				hidden = dropout(fully_connected(hidden, dim, 'Decode_' + str(h)), self.params.keep_prob, self.training)
+			reconstruct = fully_connected(hidden, self.params.feat_dim, 'Decode_' + str(len(self.params.node_dim)))
+			self.loss_r = tf.reduce_mean(tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(labels=feature, logits=reconstruct), axis=1))
+		else:
+			self.embedding = embedding('Embedding', [graph.num_node + 1, self.params.node_dim[-1]])
 
 		instance_embed = [tf.reshape(tf.nn.embedding_lookup(self.embedding, self.kernel[i]), [-1, self.params.kernel_sizes[i] * self.params.node_dim[-1]])
 		                       for i in range(self.params.num_kernel)]
@@ -55,9 +58,11 @@ class GCN(object):
 
 		logits = fully_connected(graph_embed, self.params.num_label, 'logits', activation='linear')
 
-		# loss = tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=tf.expand_dims(self.label, axis=0))\
-		# 	   + self.params.lambda_r * self.loss_r
-		loss = tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=tf.expand_dims(self.label, axis=0))
+		if self.params.use_feature:
+			loss = tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=tf.expand_dims(self.label, axis=0))\
+			       + self.params.lambda_r * self.loss_r
+		else:
+			loss = tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=tf.expand_dims(self.label, axis=0))
 
 		self.predict = tf.cast(tf.argmax(logits, 1), 'int32')
 

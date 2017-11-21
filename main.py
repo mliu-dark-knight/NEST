@@ -11,6 +11,7 @@ flags.DEFINE_string('data', 'data.txt', None)
 flags.DEFINE_string('feature', 'feature.txt', None)
 flags.DEFINE_string('label', 'label.txt', None)
 
+flags.DEFINE_boolean('use_feature', False, 'Use feature or not')
 flags.DEFINE_integer('feat_dim', -1, None)
 flags.DEFINE_list('node_dim', [512, 256], 'Dimension of hidden layers between feature and node embedding')
 flags.DEFINE_list('instance_h_dim', [256], 'Dimension of hidden layers between node embedding and instance embedding, last element is the dimension of instance embedding')
