@@ -19,14 +19,15 @@ class Graph(object):
 		except:
 			self.init_nbs()
 			dill.dump(self.nbs, open(path, 'wb'))
-		self.num_node = len(self.nbs)
+		with open(self.data_dir + self.params.graph, 'r') as f:
+			self.num_node = int(f.readline().strip())
 		self.feature = self.read_feature()
 		self.feat_dim = len(self.feature[0])
 
 	def init_nbs(self):
-		self.nbs = defaultdict(lambda : set())
 		with open(self.data_dir + self.params.graph, 'r') as f:
 			next(f)
+			self.nbs = defaultdict(lambda: set())
 			for line in f:
 				[n1, n2] = list(map(int, line.rstrip().split()))
 				self.nbs[n1].add(n2)
@@ -140,8 +141,6 @@ class Predictor(object):
 				for i in tqdm(range(len(train)), ncols=100):
 					data = train[i]
 					sess.run(self.model.gradient_descent, feed_dict=self.feed_dict(data, True))
-			# loss_r = sess.run(self.model.loss_r, feed_dict={self.model.training: False})
-			# print('Reconstruction loss: %f', loss_r)
 			train_accuracy = self.eval(sess, train)
 			test_accuracy = self.eval(sess, test)
 			return train_accuracy, test_accuracy

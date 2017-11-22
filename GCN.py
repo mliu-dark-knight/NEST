@@ -9,11 +9,11 @@ class GCN(object):
 	def build_placeholder(self):
 		self.training = tf.placeholder(tf.bool)
 		'''
-			placeholder can only take one subgraph to avoid multiple None dimensions
-			tensorflow will throw exception when sub-dimensions does not match
-			however, every subgraph can have different number of kernels
-			therefore cannot pad null tensor otherwise would be bad for average pooling
-			'''
+		placeholder can only take one subgraph to avoid multiple None dimensions
+		tensorflow will throw exception when sub-dimensions does not match
+		however, every subgraph can have different number of kernels
+		therefore cannot pad null tensor otherwise would be bad for average pooling
+		'''
 		self.kernel = [tf.placeholder(tf.int32, [None, size]) for size in self.params.kernel_sizes]
 		self.label = tf.placeholder(tf.int32, shape=[self.params.num_label])
 
@@ -28,14 +28,18 @@ class GCN(object):
 			hidden = feature
 			for h, dim in enumerate(self.params.node_dim):
 				hidden = dropout(fully_connected(hidden, dim, 'Encode_' + str(h)), self.params.keep_prob, self.training)
-			self.embedding = hidden
+			feature_embedding = hidden
+		if self.params.use_embedding:
+			node_embedding = dropout(embedding('Embedding', [graph.num_node + 1, self.params.node_dim[-1]]), self.params.keep_prob, self.training)
 
-			for h, dim in enumerate(reversed(self.params.node_dim[1:])):
-				hidden = dropout(fully_connected(hidden, dim, 'Decode_' + str(h)), self.params.keep_prob, self.training)
-			reconstruct = fully_connected(hidden, self.params.feat_dim, 'Decode_' + str(len(self.params.node_dim)))
-			self.loss_r = tf.reduce_mean(tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(labels=feature, logits=reconstruct), axis=1))
+		if self.params.use_feature and self.params.use_embedding:
+			self.embedding = tf.concat([feature_embedding, node_embedding], axis=1)
+		elif self.params.use_feature and not self.params.use_embedding:
+			self.embedding = feature_embedding
+		elif not self.params.use_feature and self.params.use_embedding:
+			self.embedding = node_embedding
 		else:
-			self.embedding = dropout(embedding('Embedding', [graph.num_node + 1, self.params.node_dim[-1]]), self.params.keep_prob, self.training)
+			raise ValueError('Invalid config')
 
 		instance_embed = [tf.reshape(tf.nn.embedding_lookup(self.embedding, self.kernel[i]), [-1, self.params.kernel_sizes[i] * self.params.node_dim[-1]])
 		                       for i in range(self.params.num_kernel)]
@@ -61,15 +65,9 @@ class GCN(object):
 		loss = tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=tf.expand_dims(self.label, axis=0))\
 			   + self.params.lambda_2 * tf.add_n(tf.get_collection('l2'))
 
-		if self.params.use_feature:
-			loss += self.params.lambda_r * self.loss_r
-
 		self.predict = tf.cast(tf.argmax(logits, 1), 'int32')
 
 		global_step = tf.Variable(0, trainable=False)
 
 		optimizer = tf.train.AdamOptimizer(learning_rate=self.params.learning_rate)
 		self.gradient_descent = optimizer.minimize(loss, global_step=global_step)
-
-		# for variable in tf.trainable_variables():
-		# 	print(variable.name, variable.get_shape())
