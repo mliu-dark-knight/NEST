@@ -12,7 +12,9 @@ def bias(name, dim, initial_value=1e-2):
 	return tf.get_variable(name, dim, initializer=tf.constant_initializer(initial_value))
 
 def embedding(name, shape):
-	return tf.get_variable(name, shape, initializer=tf.random_uniform_initializer(minval=-1.0 / shape[1], maxval=1.0 / shape[1]))
+	var = tf.get_variable(name, shape, initializer=tf.random_uniform_initializer(minval=-1.0 / shape[1], maxval=1.0 / shape[1]))
+	tf.add_to_collection('l2', tf.nn.l2_loss(var))
+	return var
 
 def fully_connected(input, num_neurons, name, activation='elu'):
 	func = {'linear': tf.identity, 'sigmoid': tf.nn.sigmoid, 'tanh': tf.nn.tanh, 'relu': tf.nn.relu, 'elu': tf.nn.elu}
