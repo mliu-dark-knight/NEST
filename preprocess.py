@@ -39,19 +39,19 @@ class Preprocess(object):
 
 	def create_kernel(self):
 		kernels = {}
-		for k, v in json.load(open(self.data_dir + self.params.kernel)).iteritems():
+		for k, v in json.load(open(self.data_dir + self.params.kernel)).items():
 			kernels[int(k)] = v
 		self.num_kernel = len(kernels)
-		self.num_ns = [v['v'] for k, v in sorted(kernels.iteritems())]
-		self.num_es = [len(v['e']) for k, v in sorted(kernels.iteritems())]
+		self.num_ns = [v['v'] for k, v in sorted(kernels.items())]
+		self.num_es = [len(v['e']) for k, v in sorted(kernels.items())]
 		with open(self.data_dir + self.params.query, 'w') as f:
-			for _, val in sorted(kernels.iteritems()):
+			for _, val in sorted(kernels.items()):
 				f.write('t #\n')
-				for i in xrange(val['v']):
+				for i in range(val['v']):
 					f.write('v %d 0\n' % i)
 				for e in val['e']:
 					f.write('e %d %d 0\n' % (e[0], e[1]))
-				for i in xrange(val['v']):
+				for i in range(val['v']):
 					f.write('a %d\n' % i)
 
 	def match(self):
@@ -109,7 +109,7 @@ class Preprocess(object):
 			num_ns, num_es = self.read_meta('subgraphs')
 			assert len(num_ns) == len(num_es)
 			miss = 0
-			for i in xrange(self.num_kernel):
+			for i in range(self.num_kernel):
 				fw.write('#\t%d\t%d\t%d\n' % ((i + 1), self.num_ns[i], 2 * self.num_es[i]))
 				if i - miss >= len(num_ns) or num_ns[i - miss] != self.num_ns[i] or num_es[i - miss] != self.num_es[i]:
 					miss += 1

@@ -25,7 +25,7 @@ flags.DEFINE_integer('epoch', 4, None)
 flags.DEFINE_float('learning_rate', 1e-4, None)
 flags.DEFINE_float('lambda_r', 1e-4, 'Coefficient of reconstruction loss')
 flags.DEFINE_float('lambda_2', 1e-3, 'Coefficient of l2 regularization loss')
-flags.DEFINE_float('memory_fraction', 1.0, None)
+flags.DEFINE_float('memory_fraction', 0.5, None)
 
 FLAGS = flags.FLAGS
 
