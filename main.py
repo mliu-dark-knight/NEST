@@ -16,17 +16,17 @@ flags.DEFINE_string('label', 'label.txt', None)
 flags.DEFINE_boolean('use_feature', True, 'Use feature or not')
 flags.DEFINE_boolean('use_embedding', True, 'Use embedding or not')
 flags.DEFINE_integer('feat_dim', -1, None)
-flags.DEFINE_list('node_dim', [128], 'Dimension of hidden layers between feature and node embedding')
+flags.DEFINE_list('node_dim', [256], 'Dimension of hidden layers between feature and node embedding')
 flags.DEFINE_list('instance_h_dim', [256], 'Dimension of hidden layers between node embedding and instance embedding, last element is the dimension of instance embedding')
 flags.DEFINE_list('graph_h_dim', [128], 'Dimension of hidden layers between instance embedding and subgraph embedding, last element is the dimension of subgraph embedding')
-flags.DEFINE_float('keep_prob', 1.0, 'Used for dropout')
+flags.DEFINE_float('keep_prob', 0.6, 'Used for dropout')
 
 flags.DEFINE_list('kernel_sizes', [1], 'List of number of nodes in kernel')
 flags.DEFINE_string('pooling', 'max', '[max, average, sum]')
 
-flags.DEFINE_integer('epoch', 1, None)
+flags.DEFINE_integer('epoch', 4, None)
 flags.DEFINE_float('learning_rate', 1e-4, None)
-flags.DEFINE_float('lambda_2', 0.0, 'Coefficient of l2 regularization loss')
+flags.DEFINE_float('lambda_2', 1e-2, 'Coefficient of l2 regularization loss')
 flags.DEFINE_float('memory_fraction', 0.5, None)
 
 FLAGS = flags.FLAGS

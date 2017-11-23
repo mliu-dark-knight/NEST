@@ -73,7 +73,7 @@ class Preprocess(object):
 				call(command, shell=True)
 				self.rewrite_output('SubMatch/output/%s/' % file, fake_to_real)
 			self.merge(file)
-		call('rm SubMatch/data/g*; rm result; rm SubMatch/%s' % self.params.query, shell=True)
+		call('rm -rf SubMatch/data/; rm result; rm SubMatch/%s' % self.params.query, shell=True)
 		call('rm subgraphs; rm -rf SubMatch/output/', shell=True)
 
 
