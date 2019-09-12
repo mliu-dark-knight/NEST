@@ -1,4 +1,16 @@
-# Nest
+## Implementation of *NEST*, ASONAM 2018.
+
+Please cite the following work if you find the code useful.
+
+```
+@inproceedings{yang2018node,
+	Author = {Yang, Carl and Liu, Mengxiong and Zheng, Vincent and Han, Jiawei},
+	Booktitle = {ASONAM},
+	Title = {Node, motif and subgraph: learning network functional blocks through structural convolution},
+	Year = {2018}
+}
+```
+Contact: Carl Yang (yangji9181@gmail.com)
 
 ## Dependencies
 ```
